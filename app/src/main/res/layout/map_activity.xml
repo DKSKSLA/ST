@@ -4,21 +4,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <androidx.appcompat.widget.SearchView
-        android:id="@+id/search_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:iconifiedByDefault="false"
-        app:queryHint="검색어를 입력하세요" />
-
     <fragment
-        android:id="@+id/map_view"
+        android:id="@+id/map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:name="com.naver.maps.map.MapFragment" />
-
 
 </LinearLayout>
