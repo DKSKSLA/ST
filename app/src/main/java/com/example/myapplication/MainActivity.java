@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // ThreeTen 백포트 사용
         AndroidThreeTen.init(this);
 
         initWidgets();
