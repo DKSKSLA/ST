@@ -1,3 +1,16 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">SPACETIME</string>
+    <string name="title_activity_main2">MainActivity2</string>
+
+    <string name="back">Back</string>
+    <string name="forward">Forward</string>
+
+    <string name="sundayText">SUN</string>
+    <string name="mondayText">MON</string>
+    <string name="tuesdayText">TUE</string>
+    <string name="wednesdayText">WED</string>
+    <string name="thursdayText">THU</string>
+    <string name="fridayText">FRI</string>
+    <string name="saturdayText">SAT</string>
+
 </resources>
