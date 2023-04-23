@@ -10,6 +10,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // 네이버지도 api 의존성 추가
         jcenter()
         maven {
             url 'https://naver.jfrog.io/artifactory/maven/'
