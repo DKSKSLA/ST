@@ -7,6 +7,13 @@
     tools:context=".MainActivity"
     android:orientation="vertical">
 
+    <!-- 테스트용 지도화면 전환 버튼 TODO 적절한 곳에 위치 수정 요망-->
+    <Button
+        android:id="@+id/tempMap_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="지도화면 전환 (임시)" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -31,7 +38,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:text="April 2023 "
-            android:textSize="20dp"
+            android:textSize="20sp"
             android:textAlignment="center"
             android:textColor="@color/black"/>
 
@@ -58,7 +65,7 @@
             android:text="@string/sundayText"
             android:textColor="@color/gray"
             android:textAlignment="center"
-            android:textSize="@string/dayTextSize" />
+            android:textSize="16sp" />
 
         <TextView
             android:layout_width="0dp"
@@ -67,7 +74,7 @@
             android:text="@string/mondayText"
             android:textColor="@color/gray"
             android:textAlignment="center"
-            android:textSize="@string/dayTextSize" />
+            android:textSize="16sp" />
 
         <TextView
             android:layout_width="0dp"
@@ -76,7 +83,7 @@
             android:text="@string/tuesdayText"
             android:textColor="@color/gray"
             android:textAlignment="center"
-            android:textSize="@string/dayTextSize" />
+            android:textSize="16sp" />
 
         <TextView
             android:layout_width="0dp"
@@ -85,7 +92,7 @@
             android:text="@string/wednesdayText"
             android:textColor="@color/gray"
             android:textAlignment="center"
-            android:textSize="@string/dayTextSize" />
+            android:textSize="16sp" />
 
         <TextView
             android:layout_width="0dp"
@@ -94,7 +101,7 @@
             android:text="@string/thursdayText"
             android:textColor="@color/gray"
             android:textAlignment="center"
-            android:textSize="@string/dayTextSize" />
+            android:textSize="16sp" />
 
         <TextView
             android:layout_width="0dp"
@@ -103,7 +110,7 @@
             android:text="@string/fridayText"
             android:textColor="@color/gray"
             android:textAlignment="center"
-            android:textSize="@string/dayTextSize" />
+            android:textSize="16sp" />
 
         <TextView
             android:layout_width="0dp"
@@ -112,7 +119,7 @@
             android:text="@string/saturdayText"
             android:textColor="@color/gray"
             android:textAlignment="center"
-            android:textSize="@string/dayTextSize" />
+            android:textSize="16sp" />
 
     </LinearLayout>
 
@@ -120,11 +127,5 @@
         android:id="@+id/calendarRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
-    <!-- 테스트용 지도화면 전환 버튼 -->
-    <Button
-        android:id="@+id/tempMap_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
 
 </LinearLayout>
