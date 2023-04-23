@@ -5,8 +5,6 @@
     <string name="back">Back</string>
     <string name="forward">Forward</string>
 
-    <string name="dayTextSize">16sp</string>
-
     <string name="sundayText">SUN</string>
     <string name="mondayText">MON</string>
     <string name="tuesdayText">TUE</string>
