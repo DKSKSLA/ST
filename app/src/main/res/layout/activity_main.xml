@@ -55,64 +55,64 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="SUN"
+            android:text="@string/sundayText"
             android:textColor="@color/gray"
             android:textAlignment="center"
-            android:textSize="16sp" />
+            android:textSize="@string/dayTextSize" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="MON"
+            android:text="@string/mondayText"
             android:textColor="@color/gray"
             android:textAlignment="center"
-            android:textSize="16sp" />
+            android:textSize="@string/dayTextSize" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="TUE"
+            android:text="@string/tuesdayText"
             android:textColor="@color/gray"
             android:textAlignment="center"
-            android:textSize="16sp" />
+            android:textSize="@string/dayTextSize" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="WEN"
+            android:text="@string/wednesdayText"
             android:textColor="@color/gray"
             android:textAlignment="center"
-            android:textSize="16sp" />
+            android:textSize="@string/dayTextSize" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="THR"
+            android:text="@string/thursdayText"
             android:textColor="@color/gray"
             android:textAlignment="center"
-            android:textSize="16sp" />
+            android:textSize="@string/dayTextSize" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="FRI"
+            android:text="@string/fridayText"
             android:textColor="@color/gray"
             android:textAlignment="center"
-            android:textSize="16sp" />
+            android:textSize="@string/dayTextSize" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="SAT"
+            android:text="@string/saturdayText"
             android:textColor="@color/gray"
             android:textAlignment="center"
-            android:textSize="16sp" />
+            android:textSize="@string/dayTextSize" />
 
     </LinearLayout>
 
@@ -120,5 +120,11 @@
         android:id="@+id/calendarRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <!-- 테스트용 지도화면 전환 버튼 -->
+    <Button
+        android:id="@+id/tempMap_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
 </LinearLayout>

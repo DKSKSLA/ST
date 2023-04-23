@@ -13,7 +13,7 @@ import android.widget.Toast;
 // Syntax 에러로 뜨지만 빌드는 되는걸 확인했음
 // 하지만 에러때문에 github에 push가 안됨
 // 해당 오류 없애려면 'ThreeTen' 백포트를 사용해야함 (java.time. -> org.threeten.bp. 으로 import 해야함)
-// 참고 링크https://scshim.tistory.com/250
+// 참고 링크 https://scshim.tistory.com/250
 import com.jakewharton.threetenabp.AndroidThreeTen;
 
 import org.threeten.bp.LocalDate;
