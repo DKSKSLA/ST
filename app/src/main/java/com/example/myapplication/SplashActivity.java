@@ -18,7 +18,7 @@ public class SplashActivity extends AppCompatActivity {
         handler.postDelayed(new Runnable() { // delayMillis 밀리초 뒤에 실행
             @Override
             public void run() {
-                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                Intent intent = new Intent(getApplicationContext(), MainActivity.class); // MainActivity 로 넘어가기 위해 Intent 사용
                 startActivity(intent);
                 finish();
             }
