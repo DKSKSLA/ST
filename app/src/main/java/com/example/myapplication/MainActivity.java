@@ -10,7 +10,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 // 안드로이드 api 26(Android 8.0 오레오) 미만 버전에서 java.time 패키지 사용하려고 하면 error 발생
-// Systex 에러로 뜨지만 빌드는 되는걸 확인했음
+// Syntax 에러로 뜨지만 빌드는 되는걸 확인했음
 // 하지만 에러때문에 github에 push가 안됨
 // 해당 오류 없애려면 'ThreeTen' 백포트를 사용해야함 (java.time. -> org.threeten.bp. 으로 import 해야함)
 // 참고 링크https://scshim.tistory.com/250
@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
         initWidgets();
         selectedDate = LocalDate.now();
         setMonthView();
-
     }
 
     private void initWidgets()
