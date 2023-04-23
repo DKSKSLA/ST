@@ -3,8 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.myapplication">
 
-    <!-- 위치 권한 -->
+    <!-- 인터넷 권한: 도로명 주소 변환에 필요 -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 위치 권한: 현재 위치 버튼 구현에 필요 -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
