@@ -3,7 +3,7 @@
 
 개발 규칙
 1. 주석 상세히 달아놓기
-2. 값 직접 집어넣는거 지양하기 (res/values/ 하위에 colors.xml, strings.xml 사용)
+2. 하드코딩된 값 사용 지양하기 (res/values/ 하위에 colors.xml, strings.xml 사용)
 3. 깃허브 커밋할 때 변경점 상세히 기록
 4. 프로젝트에 무슨 문제 있으면 반드시 모두에게 알릴 것
 
