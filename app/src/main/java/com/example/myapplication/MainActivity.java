@@ -33,11 +33,13 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        AndroidThreeTen.init(this);
+
         initWidgets();
         selectedDate = LocalDate.now();
         setMonthView();
 
-        AndroidThreeTen.init(this);
     }
 
     private void initWidgets()
