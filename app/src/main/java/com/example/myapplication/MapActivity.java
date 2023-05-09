@@ -65,11 +65,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         naverMap.setMinZoom(10.5); // 지도 축소 제한
 
-        // 유저 인터페이스 사용
-        uiSettings = naverMap.getUiSettings();
-
+        uiSettings = naverMap.getUiSettings(); // 유저 인터페이스 사용
         uiSettings.setLocationButtonEnabled(true); // 현재 위치 버튼 활성화
-        naverMap.setLocationSource(locationSource); // TODO 현재 위치 버튼 구현
+        naverMap.setLocationSource(locationSource); // 현재 위치 버튼 활성화
 
         naverMap.setOnMapClickListener(new NaverMap.OnMapClickListener() { // 지도 클릭 시 이벤트
             @Override
