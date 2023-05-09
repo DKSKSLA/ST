@@ -1,6 +1,6 @@
 package com.example.myapplication;
 
-public class DataModel {
+public class DataModel {//할 일 어댑터
     String text1;
     String text2;
     String text3;
