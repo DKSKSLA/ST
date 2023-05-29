@@ -4,9 +4,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
+import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +23,7 @@ import android.widget.Toast;
 // 해당 오류 없애려면 'ThreeTen' 백포트를 사용해야함 (java.time. -> org.threeten.bp. 으로 import 해야함)
 // 참고 링크 https://scshim.tistory.com/250
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 
 import org.threeten.bp.LocalDate;
@@ -35,11 +39,12 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
     private TextView monthYearText;
     private RecyclerView calendarRecyclerView;
     private LocalDate selectedDate;
-
+    private Boolean weekon=false;
     public Button mapButton;
     public Button aaa;
     public FloatingActionButton fab;
     public View L3;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -65,6 +70,20 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
         recyclerView.setLayoutManager(new LinearLayoutManager(this,RecyclerView.VERTICAL,false));
 
 
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.w("FirebaseSettingEx", "getInstanceId failed", task.getException());
+                        return;
+                    }
+            String aaa = task.getResult();//자신 기기의 토큰
+            System.out.println(aaa+"해당 기기의 토큰");//출력
+
+            FirebaseMessaging.getInstance().subscribeToTopic("1");//푸시 알림을 빨리 보내기 위한 구독기능
+            //개인마다 다르게 하기로 설정, 임의의 번호를 부여하는식으로
+
+
+        });
+
         initWidgets();
         selectedDate = LocalDate.now();
         setMonthView();
@@ -72,19 +91,31 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
         aaa.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setWeekView();
+                if(!weekon) {
 
-               params.height=(int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics());
-               L3.setLayoutParams(params);
-
+                    params.height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                            150, getResources().getDisplayMetrics());
+                    L3.setLayoutParams(params);//L3 크기조절
+                    setWeekView();//주로바꾸기
+                    weekon= !weekon;//같은버튼 재활용위한 BOOL
+                }
+                else{
+                    params.height=(int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                            300, getResources().getDisplayMetrics());
+                    L3.setLayoutParams(params);//L3 크기조절
+                    setMonthView();//달로 바꾸기
+                    weekon= !weekon;//같은 버튼 재활용위한 BOOL
+                }
             }
         });
+
+        //FAB버튼 설정
         fab=(FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(),SecondActivity.class);
-                startActivity(intent);
+                startActivity(intent);//할일 추가 액티비티로 이동
             }
         });
 

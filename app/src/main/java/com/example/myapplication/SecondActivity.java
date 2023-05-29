@@ -25,12 +25,13 @@ public class SecondActivity extends AppCompatActivity {
                 space);
         adapter.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item);
         spin.setAdapter(adapter);
+
         spin.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if(space[position].equals("추가")){
                     Intent intent = new Intent(getApplicationContext(), MapActivity.class);
-                    startActivity(intent);//지도액티비티
+                    startActivity(intent);//지도액티비티 오픈
                 }
 
             }
