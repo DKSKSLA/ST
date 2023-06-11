@@ -2,12 +2,16 @@ package com.example.myapplication;
 
 import android.content.Context;
 import android.graphics.PointF;
-import android.icu.text.IDNA;
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.gson.Gson;
 import com.naver.maps.geometry.LatLng;
+import com.naver.maps.map.CameraAnimation;
+import com.naver.maps.map.CameraUpdate;
 import com.naver.maps.map.LocationTrackingMode;
 import com.naver.maps.map.MapView;
 import com.naver.maps.map.NaverMap;
@@ -16,6 +20,12 @@ import com.naver.maps.map.UiSettings;
 import com.naver.maps.map.overlay.InfoWindow;
 import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.util.FusedLocationSource;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -30,6 +40,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private FusedLocationSource locationSource; // 위치를 반환하는 구현체
 
     private Marker marker = new Marker();
+
+    String finalAddress_addr = null; // 최종적으로 나온 지번주소
+    String finalAddress_roadaddr = null; //         도로명주소
+    String infoText = null; // 마커 정보창 텍스트
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,22 +86,211 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         naverMap.setOnMapClickListener(new NaverMap.OnMapClickListener() { // 지도 클릭 시 이벤트
             @Override
             public void onMapClick(PointF pointF, LatLng clickedLatLng) {
-                marker.setPosition(clickedLatLng);
-                marker.setMap(naverMap); // 마커 생성
+                marker.setPosition(clickedLatLng); // 마커 위치 설정
 
                 // 마커 정보 창 설정
-                infoWindow.setPosition(clickedLatLng);
+                infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) { // 마커 정보 창 갱신
+                    @Override
+                    public CharSequence getText(InfoWindow infoWindow) {
+                        Log.d("qwe", "setAdapter 호출");
+                        requestReverseGeocode(clickedLatLng);
+
+                        if (finalAddress_roadaddr != null) // 도로명주소가 받아졌으면 도로명주소 출력
+                            infoText = finalAddress_roadaddr;
+                        else                                // 아니면 지번주소 출력
+                            infoText = finalAddress_addr;
+
+                        return infoText; // 리버스 지오코딩 사용해서 좌표를 주소로 변환
+                        // return marker.getPosition().toString();
+                    }
+                });
+
+                marker.setMap(naverMap); // 마커 생성
+
+                Log.d("qwe", "맵 클릭");
+
+                infoWindow.setPosition(clickedLatLng); // 마커 정보창 위치 설정
                 infoWindow.open(marker); // 마커 위치 기반으로 위치 정보 생성
             }
         });
-
-        // TODO 마커 정보 창
-        infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) {
-            @Override
-            public CharSequence getText(InfoWindow infoWindow) {
-                // TODO Reverse Geocoding 사용해서 좌표를 주소로 변환
-                return marker.getPosition().toString();
-            }
-        });
     }
+
+    // 굉장히 비효율적이게 리버스 지오코딩이랑 겹치는 부분이 많음
+    public void requestGeocode(String search) {
+        try {
+            BufferedReader bufferedReader;
+            StringBuilder stringBuilder = new StringBuilder();
+            String addr = search;// "분당구 성남대로 601";
+            String query = "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode?query=" + URLEncoder.encode(addr, "UTF-8");
+            URL url = new URL(query);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (conn != null) {
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("X-NCP-APIGW-API-KEY-ID", "up10bmidqj"); // Client ID
+                conn.setRequestProperty("X-NCP-APIGW-API-KEY", "kAz0pY2vGXJlGOAngfIIXiCchPamadb9bg9oSEpK"); // Client Secret
+                conn.setDoInput(true);
+
+                int responseCode = conn.getResponseCode();
+
+                if (responseCode == 200) { // 200 = 성공
+                    bufferedReader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                } else {
+                    bufferedReader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                }
+
+                String line = null;
+                while ((line = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(line + "\n");
+                }
+
+                int indexFirst;
+                int indexLast;
+
+                indexFirst = stringBuilder.indexOf("\"x\":\"");
+                indexLast = stringBuilder.indexOf("\",\"y\":");
+                String x = stringBuilder.substring(indexFirst + 5, indexLast);
+
+                indexFirst = stringBuilder.indexOf("\"y\":\"");
+                indexLast = stringBuilder.indexOf("\",\"distance\":");
+                String y = stringBuilder.substring(indexFirst + 5, indexLast);
+
+                LatLng searchLatLng = new LatLng(Double.valueOf(x),Double.valueOf(y));
+
+                // 카메라 이동시키기
+                CameraUpdate cameraUpdate = CameraUpdate.scrollTo(searchLatLng).animate(CameraAnimation.Easing);
+                naverMap.moveCamera(cameraUpdate);
+
+                marker.setPosition(searchLatLng); // 마커 위치 설정
+                marker.setMap(naverMap); // 마커 생성
+
+                infoWindow.setPosition(searchLatLng); // 마커 정보창 위치 설정
+                infoWindow.open(marker); // 마커 위치 기반으로 위치 정보 생성
+
+                bufferedReader.close();
+                conn.disconnect();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    // 존나 비효율적이게 지오코딩이랑 겹치는 부분 개많음
+    public void requestReverseGeocode(LatLng clickedLatLng) {
+        new Thread(() -> {
+            try {
+                BufferedReader bufferedReader;
+                StringBuilder stringBuilder = new StringBuilder();
+                String coord = String.format("%.7f", clickedLatLng.longitude) + "," + String.format("%.7f", clickedLatLng.latitude); // "127.1234308,37.3850143"; //  // "111,222" 형태로 위도 경도가 저장됨;
+                Log.d("qwe", coord);
+
+                // 도로명 주소
+                String query = "https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?request=coordsToaddr&coords="
+                        + coord + "&sourcecrs=epsg:4326&output=json&orders=addr,admcode,roadaddr&output=xml"; // coord 기준으로 json 받아오는 쿼리문
+                URL url = new URL(query);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                if (conn != null) {
+                    conn.setConnectTimeout(5000);
+                    conn.setReadTimeout(5000);
+                    conn.setRequestMethod("GET");
+                    conn.setRequestProperty("X-NCP-APIGW-API-KEY-ID", "up10bmidqj"); // Client ID
+                    conn.setRequestProperty("X-NCP-APIGW-API-KEY", "kAz0pY2vGXJlGOAngfIIXiCchPamadb9bg9oSEpK"); // Client Secret
+                    conn.setDoInput(true);
+
+                    int responseCode = conn.getResponseCode();
+                    Log.d("qwe", String.valueOf(responseCode));
+                    if (responseCode == 200) { // 200 = 정상 응답
+                        bufferedReader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    }
+                    else {
+                        bufferedReader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                    }
+
+                    String line = null;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        stringBuilder.append(line + "\n");
+                    }
+
+                    Gson gson = new Gson(); // json 받아오는거
+                    Address address = gson.fromJson(String.valueOf(stringBuilder), Address.class);
+
+                    if (address.results[0].region.area1.name != null)
+                        finalAddress_roadaddr = address.results[0].region.area1.name;
+                    if (address.results[0].region.area2.name != null)
+                        finalAddress_roadaddr += address.results[0].region.area2.name;
+                    if (address.results[0].region.area3.name != null)
+                        finalAddress_roadaddr += address.results[0].region.area3.name;
+                    if (address.results[0].region.area4.name != null)
+                        finalAddress_roadaddr += address.results[0].region.area4.name;
+                    if (address.results[0].land.addition0.value != null)
+                        finalAddress_roadaddr += address.results[0].land.addition0.value;
+
+                    bufferedReader.close();
+                    conn.disconnect();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+        Log.d("qwe", "requestGeocode() 호출");
+    }
+}
+
+
+// json 주소 처리하기 위한 클래스들
+class Addition {
+    String type;
+    String value;
+}
+class Area {
+    String name;
+    Coords coords;
+}
+class Area1 {
+    String name;
+    Coords coords;
+    String alias;
+}
+class Coords {
+    String crs;
+    double x;
+    double y;
+}
+class Land {
+    String type;
+    String number1;
+    String number2;
+    Addition addition0; // 건물명
+    Addition addition1; // zipcode
+    Addition addition2; // roadGroupCode
+    Addition addition3;
+    Addition addition4;
+    String name;
+    Coords coords;
+}
+class Region {
+    Area area0; // 국가
+    Area1 area1; // 도
+    Area area2; // 시 구
+    Area area3; // 동
+    Area area4;
+}
+class Status {
+    long code;
+    String name;
+    String message;
+}
+class Address {
+    Status status;
+    Result[] results;
+}
+
+class Result {
+    String name;
+    String id;
+    String type;
+    String mappingID;
+    Region region;
+    Land land;
 }
