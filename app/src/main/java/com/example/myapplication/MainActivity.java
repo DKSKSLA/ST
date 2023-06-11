@@ -1,11 +1,17 @@
 package com.example.myapplication;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
@@ -36,14 +42,17 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements CalendarAdapter.OnItemListener
 {
+    public static final int REQUEST_CODE_ADDLIST=100;
     private TextView monthYearText;
     private RecyclerView calendarRecyclerView;
-    private LocalDate selectedDate;
+    private LocalDate selectedDate;//눌린 날짜
     private Boolean weekon=false;
     public Button mapButton;
     public Button aaa;
     public FloatingActionButton fab;
     public View L3;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -54,15 +63,29 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
         // ThreeTen 백포트 사용
         AndroidThreeTen.init(this);
         L3=(View) findViewById(R.id.L3);
-        ViewGroup.LayoutParams params =L3.getLayoutParams();
 
+        //DB설정
+        DBHelper helper;
+        SQLiteDatabase db;
+        helper= new DBHelper(getApplicationContext());
+        db=helper.getWritableDatabase();
+        //helper.onCreate(db);
+        helper.onUpgrade(db,1,2);
+
+
+        Cursor c=db.rawQuery("SELECT * FROM "+TableInfo.TABLE_NAME,null);
+        while(c.moveToNext()){
+            int colid=c.getColumnIndex(TableInfo.COLUMN_NAME_TITLE);
+            String title= c.getString(colid);
+        }
+
+
+        //할일리스트 의 내부 어댑터랑 기본설정들
         ItemAdapter adapter;
         RecyclerView recyclerView;
-
         ArrayList<DataModel> dataModels = new ArrayList();
-
-        dataModels.add(new DataModel("대학","2시","모바일캡스톤 발표","내용"));
-        dataModels.add(new DataModel("대학","5시","웹프로그래밍시험","내용"));
+        dataModels.add(new DataModel("대학","2시","모바일캡스톤 발표","내용"));//임시
+        dataModels.add(new DataModel("대학","5시","웹프로그래밍시험","내용"));//임시
 
         recyclerView = findViewById(R.id.listRecyclerView);
         adapter = new ItemAdapter(this,dataModels);
@@ -83,26 +106,22 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
 
 
         });
-
         initWidgets();
+
         selectedDate = LocalDate.now();
         setMonthView();
         aaa=(Button) findViewById(R.id.aaa);
-        aaa.setOnClickListener(new View.OnClickListener() {
+
+        aaa.setOnClickListener(new View.OnClickListener() {//주간전환
             @Override
             public void onClick(View v) {
                 if(!weekon) {
-
-                    params.height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                            150, getResources().getDisplayMetrics());
-                    L3.setLayoutParams(params);//L3 크기조절
+                    changeparam(L3.getLayoutParams(),150);//크기변경
                     setWeekView();//주로바꾸기
                     weekon= !weekon;//같은버튼 재활용위한 BOOL
                 }
                 else{
-                    params.height=(int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                            300, getResources().getDisplayMetrics());
-                    L3.setLayoutParams(params);//L3 크기조절
+                    changeparam(L3.getLayoutParams(),300);
                     setMonthView();//달로 바꾸기
                     weekon= !weekon;//같은 버튼 재활용위한 BOOL
                 }
@@ -115,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(),SecondActivity.class);
-                startActivity(intent);//할일 추가 액티비티로 이동
+                startActivityForResult(intent,REQUEST_CODE_ADDLIST);//할일 추가 액티비티로 이동
             }
         });
 
@@ -128,7 +147,40 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
                 startActivity(intent);
             }
         });
+
+
     }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE_ADDLIST) {
+            if (resultCode != Activity.RESULT_OK) {
+                return;
+            }
+            String title=data.getStringExtra("title");
+            String time=data.getStringExtra("time");
+            String memo=data.getStringExtra("memo");
+            String space=data.getStringExtra("space");
+
+            ContentValues values=new ContentValues();
+            values.put(TableInfo.COLUMN_NAME_ID,1);
+            values.put(TableInfo.COLUMN_NAME_TITLE,title);
+            values.put(TableInfo.COLUMN_NAME_TIME,time);
+            values.put(TableInfo.COLUMN_NAME_MEMO,memo);
+            values.put(TableInfo.COLUMN_NAME_SPACE,space);
+
+            DBHelper helper;
+            SQLiteDatabase db;
+            helper= new DBHelper(getApplicationContext());
+            db=helper.getWritableDatabase();
+
+            db.insert(TableInfo.TABLE_NAME,null,values);
+
+        }
+    }
+
+
 
     private void initWidgets()
     {
@@ -235,12 +287,16 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
 
     public void previousMonthAction(View view)
     {
+        changeparam(L3.getLayoutParams(),300);
+
         selectedDate = selectedDate.minusMonths(1);
         setMonthView();
     }
 
     public void nextMonthAction(View view)
     {
+        changeparam(L3.getLayoutParams(),300);
+
         selectedDate = selectedDate.plusMonths(1);
         setMonthView();
     }
@@ -251,6 +307,13 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
         {
             String message = "Selected Date " + dayText + " " + monthYearFromDate(selectedDate);
             Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+
         }
+    }
+    public void changeparam(ViewGroup.LayoutParams params,int hei)
+    {
+        params.height=(int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                hei, getResources().getDisplayMetrics());
+        L3.setLayoutParams(params);//L3 크기조절
     }
 }
