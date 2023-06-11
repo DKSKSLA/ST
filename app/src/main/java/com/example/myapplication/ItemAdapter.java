@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,12 +46,17 @@ public class ItemAdapter extends RecyclerView.Adapter{
                 .inflate(R.layout.itemview,parent,false);
         MyViewHolder viewHolder = new MyViewHolder(view);
 
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
 
         //생선된 뷰홀더를 리턴하여 onBindViewHolder에 전달한다.
         return viewHolder;
     }
-
-
 
 
     @Override
@@ -62,7 +68,9 @@ public class ItemAdapter extends RecyclerView.Adapter{
         myViewHolder.textView1.setText(dataModels.get(position).getText1());
         myViewHolder.textView2.setText(dataModels.get(position).getText2());
         myViewHolder.textView3.setText(dataModels.get(position).getText3());
-        myViewHolder.textView4.setText(dataModels.get(position).getText4());
+
+
+
 
         myViewHolder.textView1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -75,14 +83,13 @@ public class ItemAdapter extends RecyclerView.Adapter{
 
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
-        TextView textView1,textView2,textView3,textView4;
+        TextView textView1,textView2,textView3;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
-            textView1 =  itemView.findViewById(R.id.textview1);
-            textView2 =  itemView.findViewById(R.id.textview2);
-            textView3 =  itemView.findViewById(R.id.textview3);
-            textView4 =  itemView.findViewById(R.id.textview4);
+            textView1 =  itemView.findViewById(R.id.texttime);
+            textView2 =  itemView.findViewById(R.id.textspace);
+            textView3 =  itemView.findViewById(R.id.texttitle);
 
         }
     }
