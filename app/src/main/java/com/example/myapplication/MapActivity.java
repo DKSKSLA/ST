@@ -7,6 +7,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 
 import com.google.gson.Gson;
 import com.naver.maps.geometry.LatLng;
@@ -45,6 +46,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     String finalAddress_roadaddr = null; //         도로명주소
     String infoText = null; // 마커 정보창 텍스트
 
+    private SearchView searchView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,8 +60,24 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // NaverMap 객체 생성
         mapView.getMapAsync(this); // OnMapReady 호출
 
+        // 검색창 뷰 객체
+        searchView = findViewById(R.id.search_view);
+
         // 권한요청
         locationSource = new FusedLocationSource(this, LOCATION_PERMISSTION_REQUEST_CODE);
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                requestGeocode(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
     }
 
     // 위치 권한 관련 처리
@@ -88,6 +107,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             public void onMapClick(PointF pointF, LatLng clickedLatLng) {
                 marker.setPosition(clickedLatLng); // 마커 위치 설정
 
+                marker.setMap(naverMap); // 마커 생성
+
                 // 마커 정보 창 설정
                 infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) { // 마커 정보 창 갱신
                     @Override
@@ -95,88 +116,100 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         Log.d("qwe", "setAdapter 호출");
                         requestReverseGeocode(clickedLatLng);
 
-                        if (finalAddress_roadaddr != null) // 도로명주소가 받아졌으면 도로명주소 출력
-                            infoText = finalAddress_roadaddr;
-                        else                                // 아니면 지번주소 출력
-                            infoText = finalAddress_addr;
+                        infoText = finalAddress_roadaddr;
+
+//                        if (finalAddress_roadaddr != null) // 도로명주소가 받아졌으면 도로명주소 출력
+//                            infoText = finalAddress_roadaddr;
+//                        else                                // TODO 아니면 지번주소 출력
+//                            infoText = finalAddress_addr;
 
                         return infoText; // 리버스 지오코딩 사용해서 좌표를 주소로 변환
                         // return marker.getPosition().toString();
                     }
                 });
-
-                marker.setMap(naverMap); // 마커 생성
-
                 Log.d("qwe", "맵 클릭");
 
                 infoWindow.setPosition(clickedLatLng); // 마커 정보창 위치 설정
                 infoWindow.open(marker); // 마커 위치 기반으로 위치 정보 생성
+
             }
         });
     }
 
-    // 굉장히 비효율적이게 리버스 지오코딩이랑 겹치는 부분이 많음
+    // TODO 굉장히 비효율적이게 리버스 지오코딩이랑 겹치는 부분이 많음
     public void requestGeocode(String search) {
-        try {
-            BufferedReader bufferedReader;
-            StringBuilder stringBuilder = new StringBuilder();
-            String addr = search;// "분당구 성남대로 601";
-            String query = "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode?query=" + URLEncoder.encode(addr, "UTF-8");
-            URL url = new URL(query);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            if (conn != null) {
-                conn.setConnectTimeout(5000);
-                conn.setReadTimeout(5000);
-                conn.setRequestMethod("GET");
-                conn.setRequestProperty("X-NCP-APIGW-API-KEY-ID", "up10bmidqj"); // Client ID
-                conn.setRequestProperty("X-NCP-APIGW-API-KEY", "kAz0pY2vGXJlGOAngfIIXiCchPamadb9bg9oSEpK"); // Client Secret
-                conn.setDoInput(true);
+        new Thread(() -> {
+            try {
+                BufferedReader bufferedReader;
+                StringBuilder stringBuilder = new StringBuilder();
+                String addr = search; // "ex) 분당구 성남대로 601";
+                String query = "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode?query=" + URLEncoder.encode(addr, "UTF-8");
+                URL url = new URL(query);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                if (conn != null) {
+                    conn.setConnectTimeout(5000);
+                    conn.setReadTimeout(5000);
+                    conn.setRequestMethod("GET");
+                    conn.setRequestProperty("X-NCP-APIGW-API-KEY-ID", "up10bmidqj"); // Client ID
+                    conn.setRequestProperty("X-NCP-APIGW-API-KEY", "kAz0pY2vGXJlGOAngfIIXiCchPamadb9bg9oSEpK"); // Client Secret
+                    conn.setDoInput(true);
 
-                int responseCode = conn.getResponseCode();
+                    int responseCode = conn.getResponseCode();
 
-                if (responseCode == 200) { // 200 = 성공
-                    bufferedReader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                } else {
-                    bufferedReader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                    if (responseCode == 200) { // 200 = 성공
+                        bufferedReader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    } else {
+                        bufferedReader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                    }
+
+                    String line = null;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        stringBuilder.append(line + "\n");
+                    }
+
+                    int indexFirst;
+                    int indexLast;
+
+                    indexFirst = stringBuilder.indexOf("\"x\":\"");
+                    indexLast = stringBuilder.indexOf("\",\"y\":");
+                    String x = stringBuilder.substring(indexFirst + 5, indexLast);
+
+                    indexFirst = stringBuilder.indexOf("\"y\":\"");
+                    indexLast = stringBuilder.indexOf("\",\"distance\":");
+                    String y = stringBuilder.substring(indexFirst + 5, indexLast);
+
+                    LatLng searchLatLng = new LatLng(Double.valueOf(y), Double.valueOf(x));
+
+                    // 카메라 이동시키기
+                    CameraUpdate cameraUpdate = CameraUpdate.scrollTo(searchLatLng).animate(CameraAnimation.Easing);
+                    naverMap.moveCamera(cameraUpdate);
+
+                    marker.setPosition(searchLatLng); // 마커 위치 설정
+
+                    // 마커 정보 창 설정 (TODO 개 쌉 버러지 코드여서 앱 확장 시 무조건 바꿔야됨)
+                    infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) { // 마커 정보 창 갱신
+                        @Override
+                        public CharSequence getText(InfoWindow infoWindow) {
+                            return search; // 리버스 지오코딩 사용해서 좌표를 주소로 변환
+                            // return marker.getPosition().toString();
+                        }
+                    });
+
+                    marker.setMap(naverMap); // 마커 생성
+
+                    infoWindow.setPosition(searchLatLng); // 마커 정보창 위치 설정
+                    infoWindow.open(marker); // 마커 위치 기반으로 위치 정보 생성
+
+                    bufferedReader.close();
+                    conn.disconnect();
                 }
-
-                String line = null;
-                while ((line = bufferedReader.readLine()) != null) {
-                    stringBuilder.append(line + "\n");
-                }
-
-                int indexFirst;
-                int indexLast;
-
-                indexFirst = stringBuilder.indexOf("\"x\":\"");
-                indexLast = stringBuilder.indexOf("\",\"y\":");
-                String x = stringBuilder.substring(indexFirst + 5, indexLast);
-
-                indexFirst = stringBuilder.indexOf("\"y\":\"");
-                indexLast = stringBuilder.indexOf("\",\"distance\":");
-                String y = stringBuilder.substring(indexFirst + 5, indexLast);
-
-                LatLng searchLatLng = new LatLng(Double.valueOf(x),Double.valueOf(y));
-
-                // 카메라 이동시키기
-                CameraUpdate cameraUpdate = CameraUpdate.scrollTo(searchLatLng).animate(CameraAnimation.Easing);
-                naverMap.moveCamera(cameraUpdate);
-
-                marker.setPosition(searchLatLng); // 마커 위치 설정
-                marker.setMap(naverMap); // 마커 생성
-
-                infoWindow.setPosition(searchLatLng); // 마커 정보창 위치 설정
-                infoWindow.open(marker); // 마커 위치 기반으로 위치 정보 생성
-
-                bufferedReader.close();
-                conn.disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        }).start();
     }
     
-    // 존나 비효율적이게 지오코딩이랑 겹치는 부분 개많음
+    // TODO 존나 비효율적이게 지오코딩이랑 겹치는 부분 개많음
     public void requestReverseGeocode(LatLng clickedLatLng) {
         new Thread(() -> {
             try {
