@@ -1,8 +1,10 @@
 package com.example.myapplication;
 
 import android.content.Context;
+import android.graphics.Camera;
 import android.graphics.PointF;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -20,6 +22,7 @@ import com.naver.maps.map.OnMapReadyCallback;
 import com.naver.maps.map.UiSettings;
 import com.naver.maps.map.overlay.InfoWindow;
 import com.naver.maps.map.overlay.Marker;
+import com.naver.maps.map.overlay.Overlay;
 import com.naver.maps.map.util.FusedLocationSource;
 
 import java.io.BufferedReader;
@@ -44,9 +47,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     String finalAddress_addr = null; // 최종적으로 나온 지번주소
     String finalAddress_roadaddr = null; //         도로명주소
-    String infoText = null; // 마커 정보창 텍스트
 
     private SearchView searchView;
+    
+    String search = null; // 검색한 텍스트
+    LatLng searchLatLng = null; // 검색한 장소 경도위도
+    LatLng clickedLatLng = null; // 클릭한 위치 경도위도
+
+    Gson gson = null; // json 받아오는거
+    Address address = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,15 +75,47 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // 권한요청
         locationSource = new FusedLocationSource(this, LOCATION_PERMISSTION_REQUEST_CODE);
 
+        // 검색창 뷰 리스너
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public boolean onQueryTextSubmit(String query) {
-                requestGeocode(query);
+            public boolean onQueryTextSubmit(String query) { // 검색 했을 시 호출
+                search = query; // 전역변수에 검색값 저장
+                requestGeocode(false); // 주소값 변환 요청
+
+                // TODO 미안하다 이거밖에 방법이 없었다 - 마커 생성은 메인 스레드에서만 됨. OnCreate 안에서만 된다는건데, 여기서 해버리면 검색한 주소의 좌표 받아오는데(requestGeocode) 시간이 걸려서 딜레이 주는수밖에 없었음
+                new Handler().postDelayed(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        // 지도에 마커 생성 작업
+                        // 마커 위치 설정
+                        marker.setPosition(searchLatLng);
+                        // 실제 마커 생성
+                        marker.setMap(naverMap);
+
+                        // 마커 정보 창 설정
+                        infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) { // 마커 정보 창 갱신
+                            @Override
+                            public CharSequence getText(InfoWindow infoWindow) {
+                                Log.d("마커 정보창 텍스트", "변경");
+
+                                return search; // 검색한 내용을 그대로 출력 TODO 이건 좀 아닌거같은데 출력 어떻게 해야하지?
+                            }
+                        });
+
+                        // 마커 정보창 위치 설정
+                        infoWindow.setPosition(searchLatLng);
+                        // 실제 정보창 생성
+                        infoWindow.open(marker);
+                    }
+                }, 1000);// 1.0초 딜레이를 준 후 시작
+
                 return false;
             }
 
             @Override
-            public boolean onQueryTextChange(String newText) {
+            public boolean onQueryTextChange(String newText) { // 검색창에 글자 하나 칠 때마다 호출
                 return false;
             }
         });
@@ -102,50 +143,86 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         uiSettings.setLocationButtonEnabled(true); // 현재 위치 버튼 활성화
         naverMap.setLocationSource(locationSource); // 현재 위치 버튼 활성화
 
-        naverMap.setOnMapClickListener(new NaverMap.OnMapClickListener() { // 지도 클릭 시 이벤트
+        // 지도 클릭 시 이벤트
+        naverMap.setOnMapClickListener(new NaverMap.OnMapClickListener() {
             @Override
-            public void onMapClick(PointF pointF, LatLng clickedLatLng) {
-                marker.setPosition(clickedLatLng); // 마커 위치 설정
+            public void onMapClick(PointF pointF, LatLng _clickedLatLng) {
+                clickedLatLng = _clickedLatLng; // 전역변수에 터치한 좌표 저장
 
-                marker.setMap(naverMap); // 마커 생성
-
-                // 마커 정보 창 설정
-                infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) { // 마커 정보 창 갱신
+                requestGeocode(true);
+                new Handler().postDelayed(new Runnable()
+                {
                     @Override
-                    public CharSequence getText(InfoWindow infoWindow) {
-                        Log.d("qwe", "setAdapter 호출");
-                        requestReverseGeocode(clickedLatLng);
+                    public void run()
+                    {
+                        if (address.results[0].region.area1.name != null)
+                            finalAddress_roadaddr = address.results[0].region.area1.name + " ";
+                        if (address.results[0].region.area2.name != null)
+                            finalAddress_roadaddr += address.results[0].region.area2.name + " ";
+                        if (address.results[0].region.area3.name != null)
+                            finalAddress_roadaddr += address.results[0].region.area3.name + " ";
+                        if (address.results[0].region.area4.name != null) // 이거 왠진 모르겠는데 아무것도 안나옴
+                            finalAddress_roadaddr += address.results[0].region.area4.name + " ";
+                        if (address.results[0].land.addition0.value != null)
+                            finalAddress_roadaddr += address.results[0].land.addition0.value;
 
-                        infoText = finalAddress_roadaddr;
+                        marker.setPosition(clickedLatLng);
+                        marker.setMap(naverMap);
 
-//                        if (finalAddress_roadaddr != null) // 도로명주소가 받아졌으면 도로명주소 출력
-//                            infoText = finalAddress_roadaddr;
-//                        else                                // TODO 아니면 지번주소 출력
-//                            infoText = finalAddress_addr;
+                        // 마커 정보 창 설정
+                        infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) { // 마커 정보 창 갱신
+                            @Override
+                            public CharSequence getText(InfoWindow infoWindow) {
+                                Log.d("마커 정보창 텍스트", "변경");
 
-                        return infoText; // 리버스 지오코딩 사용해서 좌표를 주소로 변환
-                        // return marker.getPosition().toString();
+                                return finalAddress_roadaddr; // 리버스 지오코딩 사용해서 좌표를 주소로 변환
+                                // return marker.getPosition().toString();
+                            }
+                        });
+
+                        // 마커 정보창 위치 설정
+                        infoWindow.setPosition(clickedLatLng);
+                        // 실제 정보창 생성
+                        infoWindow.open(marker);
                     }
-                });
-                Log.d("qwe", "맵 클릭");
+                }, 300);// 0.3초 딜레이를 준 후 시작
 
-                infoWindow.setPosition(clickedLatLng); // 마커 정보창 위치 설정
-                infoWindow.open(marker); // 마커 위치 기반으로 위치 정보 생성
+                Log.d("", "맵 클릭");
+            }
+        });
 
+        infoWindow.setOnClickListener(new Overlay.OnClickListener() {
+            @Override
+            public boolean onClick(@NonNull Overlay overlay) {
+                Log.d("qweqweqw", "qweeeeeeeeeeeeeeeeee");
+                return false;
             }
         });
     }
 
-    // TODO 굉장히 비효율적이게 리버스 지오코딩이랑 겹치는 부분이 많음
-    public void requestGeocode(String search) {
+    // 리버스 지오코딩을 요청하는지를 boolean 매개변수로 판별함
+    public void requestGeocode(boolean requestReverseGeoCode) {
         new Thread(() -> {
             try {
                 BufferedReader bufferedReader;
                 StringBuilder stringBuilder = new StringBuilder();
-                String addr = search; // "ex) 분당구 성남대로 601";
-                String query = "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode?query=" + URLEncoder.encode(addr, "UTF-8");
-                URL url = new URL(query);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                HttpURLConnection conn = null;
+                URL url = null;
+                String query = null;
+
+                if (requestReverseGeoCode) { // 좌표 -> 주소 (리버스 지오코딩)
+                    String coord = String.format("%.7f", clickedLatLng.longitude) + "," + String.format("%.7f", clickedLatLng.latitude); // 경도 위도 저장;
+                    Log.d("클릭한 좌표값", coord);
+
+                    query = "https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?request=coordsToaddr&coords="
+                            + coord + "&sourcecrs=epsg:4326&output=json&orders=roadaddr&output=xml"; // coord 기준으로 json 받아오는 쿼리문
+                }
+                else { // 주소 -> 좌표 (지오코딩)
+                    query = "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode?query=" + URLEncoder.encode(search, "UTF-8");
+                }
+
+                url = new URL(query);
+                conn = (HttpURLConnection) url.openConnection();
                 if (conn != null) {
                     conn.setConnectTimeout(5000);
                     conn.setReadTimeout(5000);
@@ -153,10 +230,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     conn.setRequestProperty("X-NCP-APIGW-API-KEY-ID", "up10bmidqj"); // Client ID
                     conn.setRequestProperty("X-NCP-APIGW-API-KEY", "kAz0pY2vGXJlGOAngfIIXiCchPamadb9bg9oSEpK"); // Client Secret
                     conn.setDoInput(true);
-
+                    
                     int responseCode = conn.getResponseCode();
-
-                    if (responseCode == 200) { // 200 = 성공
+                    
+                    Log.d("응답코드 200이면 성공", String.valueOf(responseCode));
+                    if (responseCode == 200) { // 200 = 정상 응답
                         bufferedReader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                     } else {
                         bufferedReader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
@@ -167,38 +245,30 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         stringBuilder.append(line + "\n");
                     }
 
-                    int indexFirst;
-                    int indexLast;
+                    if (requestReverseGeoCode) { // 좌표 -> 주소 (리버스 지오코딩)
+                        gson = new Gson(); // json 받아오는거
+                        address = gson.fromJson(String.valueOf(stringBuilder), Address.class);
+                    }
 
-                    indexFirst = stringBuilder.indexOf("\"x\":\"");
-                    indexLast = stringBuilder.indexOf("\",\"y\":");
-                    String x = stringBuilder.substring(indexFirst + 5, indexLast);
+                    if (!requestReverseGeoCode) { // 주소 -> 좌표 (지오코딩)
+                        int indexFirst;
+                        int indexLast;
 
-                    indexFirst = stringBuilder.indexOf("\"y\":\"");
-                    indexLast = stringBuilder.indexOf("\",\"distance\":");
-                    String y = stringBuilder.substring(indexFirst + 5, indexLast);
+                        indexFirst = stringBuilder.indexOf("\"x\":\"");
+                        indexLast = stringBuilder.indexOf("\",\"y\":");
+                        String x = stringBuilder.substring(indexFirst + 5, indexLast);
 
-                    LatLng searchLatLng = new LatLng(Double.valueOf(y), Double.valueOf(x));
+                        indexFirst = stringBuilder.indexOf("\"y\":\"");
+                        indexLast = stringBuilder.indexOf("\",\"distance\":");
+                        String y = stringBuilder.substring(indexFirst + 5, indexLast);
 
-                    // 카메라 이동시키기
-                    CameraUpdate cameraUpdate = CameraUpdate.scrollTo(searchLatLng).animate(CameraAnimation.Easing);
-                    naverMap.moveCamera(cameraUpdate);
+                        searchLatLng = new LatLng(Double.valueOf(y), Double.valueOf(x));
+                        Log.d("검색한 주소 좌표", searchLatLng.toString());
 
-                    marker.setPosition(searchLatLng); // 마커 위치 설정
-
-                    // 마커 정보 창 설정 (TODO 개 쌉 버러지 코드여서 앱 확장 시 무조건 바꿔야됨)
-                    infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) { // 마커 정보 창 갱신
-                        @Override
-                        public CharSequence getText(InfoWindow infoWindow) {
-                            return search; // 리버스 지오코딩 사용해서 좌표를 주소로 변환
-                            // return marker.getPosition().toString();
-                        }
-                    });
-
-                    marker.setMap(naverMap); // 마커 생성
-
-                    infoWindow.setPosition(searchLatLng); // 마커 정보창 위치 설정
-                    infoWindow.open(marker); // 마커 위치 기반으로 위치 정보 생성
+                        // 카메라 이동시키기
+                        CameraUpdate cameraUpdate = CameraUpdate.scrollTo(searchLatLng).animate(CameraAnimation.Easing);
+                        naverMap.moveCamera(cameraUpdate);
+                    }
 
                     bufferedReader.close();
                     conn.disconnect();
@@ -207,66 +277,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 e.printStackTrace();
             }
         }).start();
-    }
-    
-    // TODO 존나 비효율적이게 지오코딩이랑 겹치는 부분 개많음
-    public void requestReverseGeocode(LatLng clickedLatLng) {
-        new Thread(() -> {
-            try {
-                BufferedReader bufferedReader;
-                StringBuilder stringBuilder = new StringBuilder();
-                String coord = String.format("%.7f", clickedLatLng.longitude) + "," + String.format("%.7f", clickedLatLng.latitude); // "127.1234308,37.3850143"; //  // "111,222" 형태로 위도 경도가 저장됨;
-                Log.d("qwe", coord);
 
-                // 도로명 주소
-                String query = "https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?request=coordsToaddr&coords="
-                        + coord + "&sourcecrs=epsg:4326&output=json&orders=addr,admcode,roadaddr&output=xml"; // coord 기준으로 json 받아오는 쿼리문
-                URL url = new URL(query);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                if (conn != null) {
-                    conn.setConnectTimeout(5000);
-                    conn.setReadTimeout(5000);
-                    conn.setRequestMethod("GET");
-                    conn.setRequestProperty("X-NCP-APIGW-API-KEY-ID", "up10bmidqj"); // Client ID
-                    conn.setRequestProperty("X-NCP-APIGW-API-KEY", "kAz0pY2vGXJlGOAngfIIXiCchPamadb9bg9oSEpK"); // Client Secret
-                    conn.setDoInput(true);
-
-                    int responseCode = conn.getResponseCode();
-                    Log.d("qwe", String.valueOf(responseCode));
-                    if (responseCode == 200) { // 200 = 정상 응답
-                        bufferedReader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    }
-                    else {
-                        bufferedReader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-                    }
-
-                    String line = null;
-                    while ((line = bufferedReader.readLine()) != null) {
-                        stringBuilder.append(line + "\n");
-                    }
-
-                    Gson gson = new Gson(); // json 받아오는거
-                    Address address = gson.fromJson(String.valueOf(stringBuilder), Address.class);
-
-                    if (address.results[0].region.area1.name != null)
-                        finalAddress_roadaddr = address.results[0].region.area1.name;
-                    if (address.results[0].region.area2.name != null)
-                        finalAddress_roadaddr += address.results[0].region.area2.name;
-                    if (address.results[0].region.area3.name != null)
-                        finalAddress_roadaddr += address.results[0].region.area3.name;
-                    if (address.results[0].region.area4.name != null)
-                        finalAddress_roadaddr += address.results[0].region.area4.name;
-                    if (address.results[0].land.addition0.value != null)
-                        finalAddress_roadaddr += address.results[0].land.addition0.value;
-
-                    bufferedReader.close();
-                    conn.disconnect();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
-        Log.d("qwe", "requestGeocode() 호출");
+        Log.d("qwe", "지오코드 실행");
     }
 }
 
@@ -307,7 +319,7 @@ class Region {
     Area1 area1; // 도
     Area area2; // 시 구
     Area area3; // 동
-    Area area4;
+    Area area4; // 뭔지 모르겠음
 }
 class Status {
     long code;
