@@ -18,18 +18,30 @@
         android:layout_height="50dp"
         android:orientation="horizontal"
         >
+        <TextView
+            android:background="@drawable/text2_des"
+            android:id="@+id/texttime"
+            android:layout_width="220dp"
+            android:layout_height="50dp"
+            android:textColor="#ffffff"
+            android:textSize="50px"
+            android:textAlignment="center"
+            android:gravity="center"
+
+            />
     <TextView
         android:background="@drawable/text2_des"
-        android:id="@+id/textview1"
-        android:layout_width="70dp"
+        android:id="@+id/textspace"
+        android:layout_width="130dp"
         android:layout_height="50dp"
         android:textColor="#ffffff"
         android:textSize="50px"
         android:textAlignment="center"
         android:gravity="center"
+        android:layout_marginLeft="10dp"
 
         />
-        <TextView
+        <!--<TextView
             android:background="@drawable/text2_des"
             android:id="@+id/textview2"
             android:layout_width="70dp"
@@ -39,26 +51,16 @@
             android:textAlignment="center"
             android:gravity="center"
 
-            />
+            /> -->
 
 
-        <TextView
-            android:background="@drawable/text2_des"
-            android:id="@+id/textview3"
-            android:layout_width="220dp"
-            android:layout_height="50dp"
-            android:textColor="#ffffff"
-            android:textSize="50px"
-            android:textAlignment="center"
-            android:gravity="center"
 
-            />
 
 
     </LinearLayout>
         <TextView
             android:background="@drawable/text3_des"
-            android:id="@+id/textview4"
+            android:id="@+id/texttitle"
             android:layout_width="360dp"
             android:layout_height="40dp"
             android:textColor="@color/black"

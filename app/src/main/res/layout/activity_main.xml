@@ -12,29 +12,18 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:showIn="@layout/activity_main">
     <!-- 테스트용 지도화면 전환 버튼 TODO 적절한 곳에 위치 수정 요망-->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/L0"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent">
-        <Button
-        android:id="@+id/tempMap_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="지도화면 전환 (임시)"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"/>
-        <Button
-            android:id="@+id/aaa"
+        <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="주간전환"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintRight_toRightOf="parent"/>
-        </LinearLayout>
-    <LinearLayout
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintVertical_bias="0.25"
+            app:srcCompat="@drawable/shape"
+            android:visibility="invisible"
+            android:id="@+id/circle"/>
+        <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -188,6 +177,28 @@
             android:layout_height="match_parent"
             app:layout_constraintHorizontal_bias="0.0" />
     </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/L0"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent">
+            <Button
+                android:id="@+id/tempMap_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="지도화면 전환 (임시)"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"/>
+            <Button
+                android:id="@+id/aaa"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="주간전환"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintRight_toRightOf="parent"/>
+        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
