@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
         SQLiteDatabase db;
         helper= new DBHelper(getApplicationContext());
         db=helper.getWritableDatabase();
-        //helper.onCreate(db);
+        helper.onCreate(db);
         helper.onUpgrade(db,1,2);
 
 
@@ -86,8 +86,9 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
         ItemAdapter adapter;
         RecyclerView recyclerView;
         ArrayList<DataModel> dataModels = new ArrayList();
-        dataModels.add(new DataModel("대학","2시","모바일캡스톤 발표","내용"));//임시
-        dataModels.add(new DataModel("대학","5시","웹프로그래밍시험","내용"));//임시
+        dataModels.add(new DataModel("11","모바일발표","2시","대학","내용"));//임시
+        dataModels.add(new DataModel("11","모바일발표","5시","대학","내용"));//임시
+
 
         recyclerView = findViewById(R.id.listRecyclerView);
         adapter = new ItemAdapter(this,dataModels);

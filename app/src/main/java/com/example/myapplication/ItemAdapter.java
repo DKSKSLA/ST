@@ -50,9 +50,9 @@ public class ItemAdapter extends RecyclerView.Adapter{
             @Override
             public void onClick(View v) {
 
+
             }
         });
-
 
         //생선된 뷰홀더를 리턴하여 onBindViewHolder에 전달한다.
         return viewHolder;
@@ -65,19 +65,10 @@ public class ItemAdapter extends RecyclerView.Adapter{
         position=holder.getAdapterPosition();
         MyViewHolder myViewHolder = (MyViewHolder)holder;
 
-        myViewHolder.textView1.setText(dataModels.get(position).getText1());
-        myViewHolder.textView2.setText(dataModels.get(position).getText2());
-        myViewHolder.textView3.setText(dataModels.get(position).getText3());
+        myViewHolder.textView1.setText(dataModels.get(position).getSpace());
+        myViewHolder.textView2.setText(dataModels.get(position).getTime());
+        myViewHolder.textView3.setText(dataModels.get(position).getTitle());
 
-
-
-
-        myViewHolder.textView1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(context, holder.getAdapterPosition()+"번째 텍스트 뷰 클릭", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
 
@@ -87,8 +78,8 @@ public class ItemAdapter extends RecyclerView.Adapter{
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
-            textView1 =  itemView.findViewById(R.id.texttime);
-            textView2 =  itemView.findViewById(R.id.textspace);
+            textView1 =  itemView.findViewById(R.id.textspace);
+            textView2 =  itemView.findViewById(R.id.texttime);
             textView3 =  itemView.findViewById(R.id.texttitle);
 
         }
