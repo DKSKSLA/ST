@@ -131,15 +131,21 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         });
 
+
+        // 마커 정보창 클릭 시 SecondActivity로 인텐트를 넘긴다.
         infoWindow.setOnClickListener(new Overlay.OnClickListener() {
             @Override
             public boolean onClick(@NonNull Overlay overlay) {
-                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                Intent intent = new Intent(getApplicationContext(), SecondActivity.class);
                 
                 intent.putExtra("address", finalAddress_roadaddr); // 도로명 주소 + 건물이름 으로 된 문자열
-                intent.putExtra("LatLng", printInfoWindowMarker_LatLng); // 해당 도로명 주소의 경도(longitude),위도(latitude) 값 (소수점 7자리까지 저장한 상태)
+                intent.putExtra("latitude", String.format("%.7f", printInfoWindowMarker_LatLng.latitude)); // 해당 도로명 주소의 위도(latitude) 값 (소수점 7자리까지 저장해 놓은 상태)
+                intent.putExtra("longitude", String.format("%.7f", printInfoWindowMarker_LatLng.longitude)); // 해당 도로명 주소의 경도(longitude) 값 (소수점 7자리까지 저장해 놓은 상태)
 
-                startActivity(intent);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // 인텐트 플래그 설정
+
+                setResult(RESULT_OK, intent); // 결과값 전달 시점과 OK 메시지를 알려줌
+                finish(); // 현재 액티비티 종료
 
                 return false;
             }
@@ -284,6 +290,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 }
 
+
 // json 주소 처리하기 위한 클래스들
 class Addition {
     String type;
@@ -332,7 +339,8 @@ class Address {
     Result[] results;
 }
 
-class Result {
+class
+Result {
     String name;
     String id;
     String type;

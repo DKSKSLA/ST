@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.DatePickerDialog;
@@ -46,7 +47,7 @@ public class SecondActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if(space[position].equals("추가")){
                     Intent intent = new Intent(getApplicationContext(), MapActivity.class);
-                    startActivity(intent);//지도액티비티 오픈
+                    startActivityForResult(intent, 0); // 지도액티비티 오픈
                 }
 
             }
@@ -79,5 +80,18 @@ public class SecondActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        // 일단 지도 액티비티에서만 인텐트 보내니까 RequestCode 는 판별하지 않음
+        if (resultCode == RESULT_OK) {
+            Toast.makeText(this, "주소: " + data.getStringExtra("address"), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "경도: " + data.getStringExtra("longitude") + "\n위도: " + data.getStringExtra("latitude"), Toast.LENGTH_LONG).show();
+        }
+        else{
+            Toast.makeText(this, "result cancle!", Toast.LENGTH_SHORT).show();
+        }
     }
 }
