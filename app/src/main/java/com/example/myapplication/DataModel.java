@@ -38,6 +38,7 @@ public class DataModel {//할 일 어댑터에 들어갈 데이터 모델 형태
     public void setText5(String text4) {
         this.memo = text4;
     }
+    public void setMemo(String text4) {this.memo = text4;}
 
     public int getRepeat() {
         return repeat;

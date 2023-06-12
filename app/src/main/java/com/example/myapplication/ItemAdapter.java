@@ -22,7 +22,7 @@ public class ItemAdapter extends RecyclerView.Adapter{
     //리사이클러뷰에 넣을 데이터 리스트
     ArrayList<DataModel> dataModels;
     Context context;
-
+    int position;
     //
     public ItemAdapter(Context context, ArrayList<DataModel> dataModels){
         this.dataModels = dataModels;
@@ -65,6 +65,7 @@ public class ItemAdapter extends RecyclerView.Adapter{
         position=holder.getAdapterPosition();
         MyViewHolder myViewHolder = (MyViewHolder)holder;
 
+        this.position=position;
         myViewHolder.textView1.setText(dataModels.get(position).getSpace());
         myViewHolder.textView2.setText(dataModels.get(position).getTime());
         myViewHolder.textView3.setText(dataModels.get(position).getTitle());
@@ -81,6 +82,33 @@ public class ItemAdapter extends RecyclerView.Adapter{
             textView1 =  itemView.findViewById(R.id.textspace);
             textView2 =  itemView.findViewById(R.id.texttime);
             textView3 =  itemView.findViewById(R.id.texttitle);
+
+            textView1.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(context, SecondActivity.class);
+                    intent.putExtra("id", dataModels.get(position).getId());
+                    context.startActivity(intent);
+                }
+            });
+            textView2.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(context, SecondActivity.class);
+                    intent.putExtra("id", dataModels.get(position).getId());
+                    context.startActivity(intent);
+                }
+            });
+            textView3.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(context, SecondActivity.class);
+                    intent.putExtra("id", dataModels.get(position).getId());
+                    context.startActivity(intent);
+                }
+            });
+
+
 
         }
     }

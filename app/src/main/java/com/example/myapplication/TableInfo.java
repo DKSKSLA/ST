@@ -6,6 +6,7 @@ public class TableInfo {
     public static final String COLUMN_NAME_ID="ID";//번호
     public static final String COLUMN_NAME_TITLE="TITLE";//제목
     public static final String COLUMN_NAME_SPACE="SPACE";//위치
+    public static final String COLUMN_NAME_DATE="DATE";//시간
     public static final String COLUMN_NAME_TIME="TIME";//시간
     public static final String COLUMN_NAME_MEMO="MEMO";//메모
 

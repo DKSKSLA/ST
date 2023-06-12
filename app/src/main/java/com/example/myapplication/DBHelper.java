@@ -13,7 +13,8 @@ public class DBHelper extends SQLiteOpenHelper {// 데이터 베이스 설정
     public static final String SQL_CREATE_TABLE=
             "CREATE TABLE IF NOT EXISTS "+ TableInfo.TABLE_NAME+" ("+
                     TableInfo.COLUMN_NAME_ID+" INTEGER PRIMARY KEY AUTOINCREMENT,"+
-                    TableInfo.COLUMN_NAME_TIME+" DATETIME,"+
+                    TableInfo.COLUMN_NAME_TIME+" TIME,"+
+                    TableInfo.COLUMN_NAME_DATE+" DATE,"+
                     TableInfo.COLUMN_NAME_MEMO+" TEXT,"+
                     TableInfo.COLUMN_NAME_TITLE+" TEXT,"+
                     TableInfo.COLUMN_NAME_SPACE+" TEXT)";
@@ -22,7 +23,7 @@ public class DBHelper extends SQLiteOpenHelper {// 데이터 베이스 설정
             "CREATE TABLE IF NOT EXISTS "+ TableInfo.TABLE_NAME2+" ("+
                     TableInfo.COLUMN_NAME_ID+" INTEGER PRIMARY KEY AUTOINCREMENT,"+
                     TableInfo.COLUMN_NAME_REPEAT+" INTEGER,"+
-                    TableInfo.COLUMN_NAME_TIME+" DATETIME,"+
+                    TableInfo.COLUMN_NAME_TIME+" TIME,"+
                     TableInfo.COLUMN_NAME_MEMO+" TEXT,"+
                     TableInfo.COLUMN_NAME_TITLE+" TEXT,"+
                     TableInfo.COLUMN_NAME_SPACE+" TEXT)";

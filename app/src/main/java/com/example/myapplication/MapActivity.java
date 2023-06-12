@@ -1,14 +1,20 @@
 package com.example.myapplication;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 
@@ -48,6 +54,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     String finalAddress_addr = null; // 최종적으로 나온 지번주소
     String finalAddress_roadaddr = null; //         도로명주소
+    String user_space;//유저가 정한 장소이름
 
     private SearchView searchView;
     
@@ -136,16 +143,37 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         infoWindow.setOnClickListener(new Overlay.OnClickListener() {
             @Override
             public boolean onClick(@NonNull Overlay overlay) {
-                Intent intent = new Intent(getApplicationContext(), SecondActivity.class);
-                
-                intent.putExtra("address", finalAddress_roadaddr); // 도로명 주소 + 건물이름 으로 된 문자열
-                intent.putExtra("longitude", String.format("%.7f", printInfoWindowMarker_LatLng.longitude)); // 해당 도로명 주소의 경도(longitude) 값 (소수점 7자리까지 저장해 놓은 상태)
-                intent.putExtra("latitude", String.format("%.7f", printInfoWindowMarker_LatLng.latitude)); // 해당 도로명 주소의 위도(latitude) 값 (소수점 7자리까지 저장해 놓은 상태)
+                Intent intent =new Intent();
 
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // 인텐트 플래그 설정
+                SQLiteDatabase db;
+                DBHelper helper;
+                helper = new DBHelper(getApplicationContext());
+                db = helper.getWritableDatabase();
+                helper.onCreate(db);
 
-                setResult(RESULT_OK, intent); // 결과값 전달 시점과 OK 메시지를 알려줌
-                finish(); // 현재 액티비티 종료
+                final EditText txt= new EditText(context);
+
+                //다이얼로그가 떠서 edittxt에 이름을 넣고 확인하면 저장하고 메인으로가게 만들어둠
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("이름설정").setMessage("이름을 설정해주세요");
+                builder.setView(txt);
+                builder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        user_space=txt.getText().toString();
+                        ContentValues values=new ContentValues();
+                        values.put(TableInfo.COLUMN_NAME_NAME,user_space);
+                        values.put(TableInfo.COLUMN_NAME_SPACEX,String.format("%.7f", printInfoWindowMarker_LatLng.longitude));
+                        values.put(TableInfo.COLUMN_NAME_SPACEY,String.format("%.7f", printInfoWindowMarker_LatLng.latitude));
+                        db.insert(TableInfo.TABLE_NAME3,null,values);
+
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // 인텐트 플래그 설정
+                        setResult(RESULT_OK, intent); // 결과값 전달 시점과 OK 메시지를 알려줌
+                        finish();
+                    }
+                });
+                builder.show();
 
                 return false;
             }

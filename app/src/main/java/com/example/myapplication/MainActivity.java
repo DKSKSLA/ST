@@ -42,59 +42,73 @@ import org.threeten.bp.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 
-public class MainActivity extends AppCompatActivity implements CalendarAdapter.OnItemListener
-{
-    public static final int REQUEST_CODE_ADDLIST=100;
+public class MainActivity extends AppCompatActivity implements CalendarAdapter.OnItemListener {
+    public static final int REQUEST_CODE_ADDLIST = 100;
     private TextView monthYearText;
-    private RecyclerView calendarRecyclerView;
-    private LocalDate selectedDate;//눌린 날짜
-    private Boolean weekon=false;
+    private RecyclerView calendarRecyclerView;//캘린더
+    private LocalDate selectedDate;//오늘날짜에다가 달만바뀌는거<달력에딸려있던거라 사용하기 불편
+    private Boolean weekon = false;//주간
     public Button mapButton;
     public Button aaa;
-    public FloatingActionButton fab;
-    public View L3;
+    public FloatingActionButton fab;//fab버튼
+    public View L3;//달력뷰 크기조절
     public static ImageView circle;
+    public String selectedday;//눌린날짜
 
+    public ItemAdapter adapter;//어댑터
+    public ArrayList<DataModel> dataModels = new ArrayList();//어댑터리스트
+    public SQLiteDatabase db;//db
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         // ThreeTen 백포트 사용
         AndroidThreeTen.init(this);
-        L3=(View) findViewById(R.id.L3);
-        circle=findViewById(R.id.circle);
+        L3 = (View) findViewById(R.id.L3);
+        circle = findViewById(R.id.circle);
+
         //DB설정
         DBHelper helper;
-        SQLiteDatabase db;
-        helper= new DBHelper(getApplicationContext());
-        db=helper.getWritableDatabase();
+        helper = new DBHelper(getApplicationContext());
+        db = helper.getWritableDatabase();
         helper.onCreate(db);
-        helper.onUpgrade(db,1,2);
-
-
-        Cursor c=db.rawQuery("SELECT * FROM "+TableInfo.TABLE_NAME,null);
-        while(c.moveToNext()){
-            int colid=c.getColumnIndex(TableInfo.COLUMN_NAME_TITLE);
-            String title= c.getString(colid);
-        }
-
 
         //할일리스트 의 내부 어댑터랑 기본설정들
-        ItemAdapter adapter;
+
         RecyclerView recyclerView;
-        ArrayList<DataModel> dataModels = new ArrayList();
-        dataModels.add(new DataModel("11","모바일발표","2시","대학","내용"));//임시
-        dataModels.add(new DataModel("11","모바일발표","5시","대학","내용"));//임시
-
-
         recyclerView = findViewById(R.id.listRecyclerView);
-        adapter = new ItemAdapter(this,dataModels);
+        adapter = new ItemAdapter(this, dataModels);
         recyclerView.setAdapter(adapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this,RecyclerView.VERTICAL,false));
+        recyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
 
+        //스레드로 데이터베이스에 입력하여서 리스트 보여주기
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Cursor c = db.rawQuery("SELECT * FROM " + TableInfo.TABLE_NAME + " WHERE " + TableInfo.COLUMN_NAME_DATE + " ='" + selectedDate + "'", null);
+                        while (c.moveToNext()) {
+
+                            int colid = c.getColumnIndex(TableInfo.COLUMN_NAME_ID);
+                            String id = c.getString(colid);
+                            colid = c.getColumnIndex(TableInfo.COLUMN_NAME_TIME);
+                            String time = c.getString(colid);
+                            colid = c.getColumnIndex(TableInfo.COLUMN_NAME_SPACE);
+                            String space = c.getString(colid);
+                            colid = c.getColumnIndex(TableInfo.COLUMN_NAME_TITLE);
+                            String title = c.getString(colid);
+                            System.out.println("이름이름이름" + title);
+                            dataModels.add(new DataModel(id, title, time, space, ""));//입력
+                        }
+                        adapter.notifyDataSetChanged();//바뀐사항적용
+                    }
+                });
+            }
+        }).start();
 
         FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
             if (!task.isSuccessful()) {
@@ -102,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
                 return;
             }
             String aaa = task.getResult();//자신 기기의 토큰
-            System.out.println(aaa+"해당 기기의 토큰");//출력
+            System.out.println(aaa + "해당 기기의 토큰");//출력
 
             FirebaseMessaging.getInstance().subscribeToTopic("2");//푸시 알림을 빨리 보내기 위한 구독기능
             //개인마다 다르게 하기로 설정, 임의의 번호를 부여하는식으로
@@ -111,31 +125,31 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
 
         selectedDate = LocalDate.now();
         setMonthView();
-        aaa=(Button) findViewById(R.id.aaa);
+        aaa = (Button) findViewById(R.id.aaa);
 
         aaa.setOnClickListener(new View.OnClickListener() {//주간전환
             @Override
             public void onClick(View v) {
-                if(!weekon) {
-                    changeparam(L3.getLayoutParams(),150);//크기변경
+                if (!weekon) {
+                    changeparam(L3.getLayoutParams(), 150);//크기변경
                     setWeekView();//주로바꾸기
-                    weekon= !weekon;//같은버튼 재활용위한 BOOL
-                }
-                else{
-                    changeparam(L3.getLayoutParams(),300);
+                    weekon = !weekon;//같은버튼 재활용위한 BOOL
+                } else {
+                    changeparam(L3.getLayoutParams(), 300);
                     setMonthView();//달로 바꾸기
-                    weekon= !weekon;//같은 버튼 재활용위한 BOOL
+                    weekon = !weekon;//같은 버튼 재활용위한 BOOL
                 }
             }
         });
 
         //FAB버튼 설정
-        fab=(FloatingActionButton) findViewById(R.id.fab);
+        fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(),SecondActivity.class);
-                startActivityForResult(intent,REQUEST_CODE_ADDLIST);//할일 추가 액티비티로 이동
+                Intent intent = new Intent(getApplicationContext(), SecondActivity.class);
+                intent.putExtra("day", selectedday);
+                startActivityForResult(intent, REQUEST_CODE_ADDLIST);//할일 추가 액티비티로 이동
             }
         });
 
@@ -151,52 +165,56 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
 
 
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
+        adapter.notifyDataSetChanged();
         if (requestCode == REQUEST_CODE_ADDLIST) {
             if (resultCode != Activity.RESULT_OK) {
                 return;
             }
-            String title=data.getStringExtra("title");
-            String time=data.getStringExtra("time");
-            String memo=data.getStringExtra("memo");
-            String space=data.getStringExtra("space");
-
+            dataModels.clear();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Cursor c = db.rawQuery("SELECT * FROM " + TableInfo.TABLE_NAME + " WHERE " + TableInfo.COLUMN_NAME_DATE + " ='" + selectedday + "'", null);
+                            while (c.moveToNext()) {
+                                int colid = c.getColumnIndex(TableInfo.COLUMN_NAME_ID);
+                                String id = c.getString(colid);
+                                colid = c.getColumnIndex(TableInfo.COLUMN_NAME_TIME);
+                                String time = c.getString(colid);
+                                colid = c.getColumnIndex(TableInfo.COLUMN_NAME_SPACE);
+                                String space = c.getString(colid);
+                                colid = c.getColumnIndex(TableInfo.COLUMN_NAME_TITLE);
+                                String title = c.getString(colid);
+                                System.out.println("이름이름이름" + title);
+                                dataModels.add(new DataModel(id, title, time, space, ""));//입력
+                            }
+                            adapter.notifyDataSetChanged();//바뀐사항적용
+                        }
+                    });
+                }
+            }).start();
             Toast.makeText(this, data.getStringExtra("address"), Toast.LENGTH_SHORT).show();
             String adr = data.getStringExtra("address"); // 주소
             String lng = data.getStringExtra("longitude"); // 경도
             String lti = data.getStringExtra("latitude"); // 위도
 
-            ContentValues values=new ContentValues();
-            values.put(TableInfo.COLUMN_NAME_ID,1);
-            values.put(TableInfo.COLUMN_NAME_TITLE,title);
-            values.put(TableInfo.COLUMN_NAME_TIME,time);
-            values.put(TableInfo.COLUMN_NAME_MEMO,memo);
-            values.put(TableInfo.COLUMN_NAME_SPACE,space);
-
-
-            DBHelper helper;
-            SQLiteDatabase db;
-            helper= new DBHelper(getApplicationContext());
-            db=helper.getWritableDatabase();
-
-            db.insert(TableInfo.TABLE_NAME,null,values);
 
         }
     }
 
 
-
-    private void initWidgets()
-    {
+    private void initWidgets() {
         calendarRecyclerView = findViewById(R.id.calendarRecyclerView);
         monthYearText = findViewById(R.id.monthYearTV);
     }
 
-    private void setMonthView()
-    {
+    private void setMonthView() {
         monthYearText.setText(monthYearFromDate(selectedDate));
         ArrayList<String> daysInMonth = daysInMonthArray(selectedDate);
 
@@ -206,8 +224,8 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
         calendarRecyclerView.setAdapter(calendarAdapter);
         circle.setVisibility(View.INVISIBLE);
     }
-    private void setWeekView()
-    {
+
+    private void setWeekView() {
         monthYearText.setText(monthYearFromDate(LocalDate.now()));
         ArrayList<String> daysInMonth = WeekArray(LocalDate.now());
 
@@ -218,8 +236,7 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
         circle.setVisibility(View.INVISIBLE);
     }
 
-    private ArrayList<String> daysInMonthArray(LocalDate date)
-    {
+    private ArrayList<String> daysInMonthArray(LocalDate date) {
 
         ArrayList<String> daysInMonthArray = new ArrayList<>();
         YearMonth yearMonth = YearMonth.from(date);
@@ -230,27 +247,22 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
 
         int dayOfWeek = firstOfMonth.getDayOfWeek().getValue();
 
-        for(int i = 1; i <= 42; i++)
-        {
-            if(i <= dayOfWeek || i > daysInMonth + dayOfWeek)
-            {
+        for (int i = 1; i <= 42; i++) {
+            if (i <= dayOfWeek || i > daysInMonth + dayOfWeek) {
                 daysInMonthArray.add("");
-            }
-            else
-            {
+            } else {
                 daysInMonthArray.add(String.valueOf(i - dayOfWeek));
             }
         }
-        return  daysInMonthArray;
+        return daysInMonthArray;
     }
 
 
-    private ArrayList<String> WeekArray(LocalDate date)
-    {
+    private ArrayList<String> WeekArray(LocalDate date) {
 
         ArrayList<String> daysInMonthArray = new ArrayList<>();//배열
 
-        int today=selectedDate.getDayOfMonth();//현재날짜
+        int today = selectedDate.getDayOfMonth();//현재날짜
 
         YearMonth yearMonth = YearMonth.from(date);//년도와달을 받기
         int daysInMonth = yearMonth.lengthOfMonth();//년도와달로 해당달최대일수
@@ -260,68 +272,98 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
         int dayOfWeekValue = selectedDate.getDayOfWeek().getValue();
 
         int dayOfWeek = firstOfMonth.getDayOfWeek().getValue();
-        int k=0;
-
-        for(int i=1; i<=dayOfWeekValue;i++)
-        {
-            if(dayOfWeekValue==7){break;}
-            int day=today-dayOfWeekValue;
-
-            if(day<0)//저번달로넘어가면 저번달 마지막날부터
-            {LocalDate selectedDate2 = selectedDate.minusMonths(1);
+        int k = 0;
+        for (int i = 1; i <= dayOfWeekValue; i++) {
+            if (dayOfWeekValue == 7) {
+                break;
+            }
+            int day = today - dayOfWeekValue;
+            if (day < 0)//저번달로넘어가면 저번달 마지막날부터
+            {
+                LocalDate selectedDate2 = selectedDate.minusMonths(1);
                 YearMonth yearMonth2 = YearMonth.from(selectedDate2);//년도와달을 받기
                 int daysInMonth2 = yearMonth2.lengthOfMonth();//년도와달로 해당달최대일수
-                day=daysInMonth2+day;}
+                day = daysInMonth2 + day;
+            }
 
             daysInMonthArray.add(String.valueOf(day));
             k++;
         }
-        for(int i=0;(i+k)<7;i++){
-            int day=today+i;
-            if(day>daysInMonth){day=day-daysInMonth+1;}//다음달로넘어가면 1일부터
+        for (int i = 0; (i + k) < 7; i++) {
+            int day = today + i;
+            if (day > daysInMonth) {
+                day = day - daysInMonth + 1;
+            }//다음달로넘어가면 1일부터
             daysInMonthArray.add(String.valueOf(day));
         }
-
-
-        return  daysInMonthArray;
+        return daysInMonthArray;
     }
 
 
-
-    private String monthYearFromDate(LocalDate date)
-    {
+    private String monthYearFromDate(LocalDate date) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM yyyy");
         return date.format(formatter);
     }
 
-    public void previousMonthAction(View view)
-    {
-        changeparam(L3.getLayoutParams(),300);
+    public void previousMonthAction(View view) {
+        changeparam(L3.getLayoutParams(), 300);
         circle.setVisibility(View.INVISIBLE);
         selectedDate = selectedDate.minusMonths(1);
         setMonthView();
+
     }
 
-    public void nextMonthAction(View view)
-    {
-        changeparam(L3.getLayoutParams(),300);
+    public void nextMonthAction(View view) {
+        changeparam(L3.getLayoutParams(), 300);
         circle.setVisibility(View.INVISIBLE);
         selectedDate = selectedDate.plusMonths(1);
         setMonthView();
     }
 
-    public void onItemClick(int position, String dayText)
-    {
-        if(!dayText.equals(""))
-        {
-            String message = "Selected Date " + dayText + " " + monthYearFromDate(selectedDate);
-            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    public void onItemClick(int position, String dayText) {
+        if (!dayText.equals("")) {
 
+            selectedday = selectedDate.toString();
+            selectedday = selectedday.substring(0, 8);
+            if (1 <= Integer.parseInt(dayText) && Integer.parseInt(dayText) <= 9) {
+                selectedday = selectedday + "0" + dayText;
+            } else {
+                selectedday = selectedday + dayText;
+            }
+            Toast.makeText(this, selectedday, Toast.LENGTH_LONG).show();
+
+            dataModels.clear();//내용물 지워두기
+
+            //새로운 내용으로 채우기= 선택한 날짜
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Cursor c = db.rawQuery("SELECT * FROM " + TableInfo.TABLE_NAME + " WHERE " + TableInfo.COLUMN_NAME_DATE + " ='" + selectedday + "'", null);
+                            while (c.moveToNext()) {
+                                int colid = c.getColumnIndex(TableInfo.COLUMN_NAME_ID);
+                                String id = c.getString(colid);
+                                colid = c.getColumnIndex(TableInfo.COLUMN_NAME_TIME);
+                                String time = c.getString(colid);
+                                colid = c.getColumnIndex(TableInfo.COLUMN_NAME_SPACE);
+                                String space = c.getString(colid);
+                                colid = c.getColumnIndex(TableInfo.COLUMN_NAME_TITLE);
+                                String title = c.getString(colid);
+                                System.out.println("이름이름이름" + title);
+                                dataModels.add(new DataModel(id, title, time, space, ""));//입력
+                            }
+                            adapter.notifyDataSetChanged();//바뀐사항적용
+                        }
+                    });
+                }
+            }).start();
         }
     }
-    public void changeparam(ViewGroup.LayoutParams params,int hei)
-    {
-        params.height=(int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+
+    public void changeparam(ViewGroup.LayoutParams params, int hei) {
+        params.height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 hei, getResources().getDisplayMetrics());
         L3.setLayoutParams(params);//L3 크기조절
     }

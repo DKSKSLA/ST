@@ -188,14 +188,14 @@
                 android:id="@+id/tempMap_btn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="지도화면 전환 (임시)"
+                android:text="장소관리"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"/>
             <Button
                 android:id="@+id/aaa"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="주간전환"
+                android:text="주간반복"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintRight_toRightOf="parent"/>
         </LinearLayout>
