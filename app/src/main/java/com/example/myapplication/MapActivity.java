@@ -6,6 +6,7 @@ import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -88,26 +89,30 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     @Override
                     public void run()
                     {
-                        // 지도에 마커 생성 작업
-                        // 마커 위치 설정
-                        marker.setPosition(searchLatLng);
-                        // 실제 마커 생성
-                        marker.setMap(naverMap);
+                        try {
+                            // 지도에 마커 생성 작업
+                            // 마커 위치 설정
+                            marker.setPosition(searchLatLng);
+                            // 실제 마커 생성
+                            marker.setMap(naverMap);
 
-                        // 마커 정보 창 설정
-                        infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) { // 마커 정보 창 갱신
-                            @Override
-                            public CharSequence getText(InfoWindow infoWindow) {
-                                Log.d("마커 정보창 텍스트", "변경");
+                            // 마커 정보 창 설정
+                            infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) { // 마커 정보 창 갱신
+                                @Override
+                                public CharSequence getText(InfoWindow infoWindow) {
+                                    Log.d("마커 정보창 텍스트", "변경");
 
-                                return search; // 검색한 내용을 그대로 출력 TODO 이건 좀 아닌거같은데 출력 어떻게 해야하지?
-                            }
-                        });
+                                    return search; // 검색한 내용을 그대로 출력 TODO 이건 좀 아닌거같은데 출력 어떻게 해야하지?
+                                }
+                            });
 
-                        // 마커 정보창 위치 설정
-                        infoWindow.setPosition(searchLatLng);
-                        // 실제 정보창 생성
-                        infoWindow.open(marker);
+                            // 마커 정보창 위치 설정
+                            infoWindow.setPosition(searchLatLng);
+                            // 실제 정보창 생성
+                            infoWindow.open(marker);
+                        } catch (Overlay.InvalidCoordinateException e){
+                            Toast.makeText(context, "정확한 도로명 주소를 입력해주세요", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }, 1000);// 1.0초 딜레이를 준 후 시작
 
@@ -155,35 +160,40 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     @Override
                     public void run()
                     {
-                        if (address.results[0].region.area1.name != null)
-                            finalAddress_roadaddr = address.results[0].region.area1.name + " ";
-                        if (address.results[0].region.area2.name != null)
-                            finalAddress_roadaddr += address.results[0].region.area2.name + " ";
-                        if (address.results[0].region.area3.name != null)
-                            finalAddress_roadaddr += address.results[0].region.area3.name + " ";
-                        if (address.results[0].region.area4.name != null) // 이거 왠진 모르겠는데 아무것도 안나옴
-                            finalAddress_roadaddr += address.results[0].region.area4.name + " ";
-                        if (address.results[0].land.addition0.value != null)
-                            finalAddress_roadaddr += address.results[0].land.addition0.value;
+                        try {
+                            if (address.results[0].region.area1.name != null)
+                                finalAddress_roadaddr = address.results[0].region.area1.name + " ";
+                            if (address.results[0].region.area2.name != null)
+                                finalAddress_roadaddr += address.results[0].region.area2.name + " ";
+                            if (address.results[0].region.area3.name != null)
+                                finalAddress_roadaddr += address.results[0].region.area3.name + " ";
+                            if (address.results[0].region.area4.name != null) // 이거 왠진 모르겠는데 아무것도 안나옴
+                                finalAddress_roadaddr += address.results[0].region.area4.name + " ";
+                            if (address.results[0].land.addition0.value != null)
+                                finalAddress_roadaddr += address.results[0].land.addition0.value;
 
-                        marker.setPosition(clickedLatLng);
-                        marker.setMap(naverMap);
+                            marker.setPosition(clickedLatLng);
+                            marker.setMap(naverMap);
 
-                        // 마커 정보 창 설정
-                        infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) { // 마커 정보 창 갱신
-                            @Override
-                            public CharSequence getText(InfoWindow infoWindow) {
-                                Log.d("마커 정보창 텍스트", "변경");
+                            // 마커 정보 창 설정
+                            infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) { // 마커 정보 창 갱신
+                                @Override
+                                public CharSequence getText(InfoWindow infoWindow) {
+                                    Log.d("마커 정보창 텍스트", "변경");
 
-                                return finalAddress_roadaddr; // 리버스 지오코딩 사용해서 좌표를 주소로 변환
-                                // return marker.getPosition().toString();
-                            }
-                        });
+                                    return finalAddress_roadaddr; // 리버스 지오코딩 사용해서 좌표를 주소로 변환
+                                    // return marker.getPosition().toString();
+                                }
+                            });
 
-                        // 마커 정보창 위치 설정
-                        infoWindow.setPosition(clickedLatLng);
-                        // 실제 정보창 생성
-                        infoWindow.open(marker);
+                            // 마커 정보창 위치 설정
+                            infoWindow.setPosition(clickedLatLng);
+                            // 실제 정보창 생성
+                            infoWindow.open(marker);
+                        } catch (ArrayIndexOutOfBoundsException e) {
+                            Toast.makeText(context, "도로명 주소를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+                        }
+
                     }
                 }, 300);// 0.3초 딜레이를 준 후 시작
 
@@ -194,7 +204,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         infoWindow.setOnClickListener(new Overlay.OnClickListener() {
             @Override
             public boolean onClick(@NonNull Overlay overlay) {
-                Log.d("qweqweqw", "qweeeeeeeeeeeeeeeeee");
+                Log.d("정보창 클릭", "eeeeeeeeeeee");
                 return false;
             }
         });
@@ -251,23 +261,28 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     }
 
                     if (!requestReverseGeoCode) { // 주소 -> 좌표 (지오코딩)
-                        int indexFirst;
-                        int indexLast;
+                        try{
+                            int indexFirst;
+                            int indexLast;
 
-                        indexFirst = stringBuilder.indexOf("\"x\":\"");
-                        indexLast = stringBuilder.indexOf("\",\"y\":");
-                        String x = stringBuilder.substring(indexFirst + 5, indexLast);
+                            if (stringBuilder != null) {
+                                indexFirst = stringBuilder.indexOf("\"x\":\"");
+                                indexLast = stringBuilder.indexOf("\",\"y\":");
+                                String x = stringBuilder.substring(indexFirst + 5, indexLast);
 
-                        indexFirst = stringBuilder.indexOf("\"y\":\"");
-                        indexLast = stringBuilder.indexOf("\",\"distance\":");
-                        String y = stringBuilder.substring(indexFirst + 5, indexLast);
+                                indexFirst = stringBuilder.indexOf("\"y\":\"");
+                                indexLast = stringBuilder.indexOf("\",\"distance\":");
+                                String y = stringBuilder.substring(indexFirst + 5, indexLast);
+                                searchLatLng = new LatLng(Double.valueOf(y), Double.valueOf(x));
+                                Log.d("검색한 주소 좌표", searchLatLng.toString());
 
-                        searchLatLng = new LatLng(Double.valueOf(y), Double.valueOf(x));
-                        Log.d("검색한 주소 좌표", searchLatLng.toString());
-
-                        // 카메라 이동시키기
-                        CameraUpdate cameraUpdate = CameraUpdate.scrollTo(searchLatLng).animate(CameraAnimation.Easing);
-                        naverMap.moveCamera(cameraUpdate);
+                                // 카메라 이동시키기
+                                CameraUpdate cameraUpdate = CameraUpdate.scrollTo(searchLatLng).animate(CameraAnimation.Easing);
+                                naverMap.moveCamera(cameraUpdate);
+                            }
+                        } catch (StringIndexOutOfBoundsException e){
+                            Log.d("검색 오류", e.toString());
+                        }
                     }
 
                     bufferedReader.close();
