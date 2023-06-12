@@ -24,6 +24,8 @@ public class SecondActivity extends AppCompatActivity {
     Spinner spin;//장소선택
     String t;//바뀐시간 담아둘 스트링
 
+    String adr, lng, lti; // MapActivity에서 받아온 도로명주소, 경도, 위도 담아둘 스트링
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,17 +71,22 @@ public class SecondActivity extends AppCompatActivity {
         addbutton1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 Intent intent = new Intent(getApplicationContext(),MainActivity.class);
                 intent.putExtra("title",title.getText().toString());
                 intent.putExtra("time",t);
                 intent.putExtra("memo",memo.getText().toString());
                 intent.putExtra("space",spin.getSelectedItem().toString());
-                setResult(RESULT_OK,intent);
+
+                intent.putExtra("address", adr); // 도로명 주소 + 건물이름 으로 된 문자열
+                intent.putExtra("longitude", lng); // 해당 도로명 주소의 경도(longitude) 값 (소수점 7자리)
+                intent.putExtra("latitude", lti); // 해당 도로명 주소의 위도(latitude) 값 (소수점 7자리)
+
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // 인텐트 플래그 설정
+
+                setResult(RESULT_OK, intent); // 결과값 전달 시점과 OK 메시지를 알려줌
                 finish();
             }
         });
-
     }
 
     @Override
@@ -87,11 +94,12 @@ public class SecondActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         // 일단 지도 액티비티에서만 인텐트 보내니까 RequestCode 는 판별하지 않음
         if (resultCode == RESULT_OK) {
-            Toast.makeText(this, "주소: " + data.getStringExtra("address"), Toast.LENGTH_SHORT).show();
-            Toast.makeText(this, "경도: " + data.getStringExtra("longitude") + "\n위도: " + data.getStringExtra("latitude"), Toast.LENGTH_LONG).show();
+            adr = data.getStringExtra("address"); // 주소
+            lng = data.getStringExtra("longitude"); // 경도
+            lti = data.getStringExtra("latitude"); // 위도
         }
         else{
-            Toast.makeText(this, "result cancle!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "result cancle", Toast.LENGTH_SHORT).show();
         }
     }
 }

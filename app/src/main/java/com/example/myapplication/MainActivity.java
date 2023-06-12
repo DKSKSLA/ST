@@ -164,12 +164,18 @@ public class MainActivity extends AppCompatActivity implements CalendarAdapter.O
             String memo=data.getStringExtra("memo");
             String space=data.getStringExtra("space");
 
+            Toast.makeText(this, data.getStringExtra("address"), Toast.LENGTH_SHORT).show();
+            String adr = data.getStringExtra("address"); // 주소
+            String lng = data.getStringExtra("longitude"); // 경도
+            String lti = data.getStringExtra("latitude"); // 위도
+
             ContentValues values=new ContentValues();
             values.put(TableInfo.COLUMN_NAME_ID,1);
             values.put(TableInfo.COLUMN_NAME_TITLE,title);
             values.put(TableInfo.COLUMN_NAME_TIME,time);
             values.put(TableInfo.COLUMN_NAME_MEMO,memo);
             values.put(TableInfo.COLUMN_NAME_SPACE,space);
+
 
             DBHelper helper;
             SQLiteDatabase db;

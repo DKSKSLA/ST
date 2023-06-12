@@ -139,8 +139,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 Intent intent = new Intent(getApplicationContext(), SecondActivity.class);
                 
                 intent.putExtra("address", finalAddress_roadaddr); // 도로명 주소 + 건물이름 으로 된 문자열
-                intent.putExtra("latitude", String.format("%.7f", printInfoWindowMarker_LatLng.latitude)); // 해당 도로명 주소의 위도(latitude) 값 (소수점 7자리까지 저장해 놓은 상태)
                 intent.putExtra("longitude", String.format("%.7f", printInfoWindowMarker_LatLng.longitude)); // 해당 도로명 주소의 경도(longitude) 값 (소수점 7자리까지 저장해 놓은 상태)
+                intent.putExtra("latitude", String.format("%.7f", printInfoWindowMarker_LatLng.latitude)); // 해당 도로명 주소의 위도(latitude) 값 (소수점 7자리까지 저장해 놓은 상태)
 
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // 인텐트 플래그 설정
 
