@@ -1,7 +1,7 @@
 package com.example.myapplication;
 
 import android.content.Context;
-import android.graphics.Camera;
+import android.content.Intent;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Handler;
@@ -52,8 +52,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private SearchView searchView;
     
     String search = null; // 검색한 텍스트
-    LatLng searchLatLng = null; // 검색한 장소 경도위도
-    LatLng clickedLatLng = null; // 클릭한 위치 경도위도
+    LatLng printInfoWindowMarker_LatLng = null; // 도로명 주소를 표기할 정보창의 마커 위치 (경도위도)
 
     Gson gson = null; // json 받아오는거
     Address address = null;
@@ -83,38 +82,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 search = query; // 전역변수에 검색값 저장
                 requestGeocode(false); // 주소값 변환 요청
 
-                // TODO 미안하다 이거밖에 방법이 없었다 - 마커 생성은 메인 스레드에서만 됨. OnCreate 안에서만 된다는건데, 여기서 해버리면 검색한 주소의 좌표 받아오는데(requestGeocode) 시간이 걸려서 딜레이 주는수밖에 없었음
-                new Handler().postDelayed(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        try {
-                            // 지도에 마커 생성 작업
-                            // 마커 위치 설정
-                            marker.setPosition(searchLatLng);
-                            // 실제 마커 생성
-                            marker.setMap(naverMap);
-
-                            // 마커 정보 창 설정
-                            infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) { // 마커 정보 창 갱신
-                                @Override
-                                public CharSequence getText(InfoWindow infoWindow) {
-                                    Log.d("마커 정보창 텍스트", "변경");
-
-                                    return search; // 검색한 내용을 그대로 출력 TODO 이건 좀 아닌거같은데 출력 어떻게 해야하지?
-                                }
-                            });
-
-                            // 마커 정보창 위치 설정
-                            infoWindow.setPosition(searchLatLng);
-                            // 실제 정보창 생성
-                            infoWindow.open(marker);
-                        } catch (Overlay.InvalidCoordinateException e){
-                            Toast.makeText(context, "정확한 도로명 주소를 입력해주세요", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                }, 1000);// 1.0초 딜레이를 준 후 시작
+                printInfoWindowMarker_LatLng = printInfoWindowMarker_LatLng;
+                // 검색한 장소의 도로명 주소 정보창 출력 (리버스 지오코딩 실행)
+                printRoadAddressInfoWindow();
 
                 return false;
             }
@@ -152,52 +122,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         naverMap.setOnMapClickListener(new NaverMap.OnMapClickListener() {
             @Override
             public void onMapClick(PointF pointF, LatLng _clickedLatLng) {
-                clickedLatLng = _clickedLatLng; // 전역변수에 터치한 좌표 저장
-
-                requestGeocode(true);
-                new Handler().postDelayed(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        try {
-                            if (address.results[0].region.area1.name != null)
-                                finalAddress_roadaddr = address.results[0].region.area1.name + " ";
-                            if (address.results[0].region.area2.name != null)
-                                finalAddress_roadaddr += address.results[0].region.area2.name + " ";
-                            if (address.results[0].region.area3.name != null)
-                                finalAddress_roadaddr += address.results[0].region.area3.name + " ";
-                            if (address.results[0].region.area4.name != null) // 이거 왠진 모르겠는데 아무것도 안나옴
-                                finalAddress_roadaddr += address.results[0].region.area4.name + " ";
-                            if (address.results[0].land.addition0.value != null)
-                                finalAddress_roadaddr += address.results[0].land.addition0.value;
-
-                            marker.setPosition(clickedLatLng);
-                            marker.setMap(naverMap);
-
-                            // 마커 정보 창 설정
-                            infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) { // 마커 정보 창 갱신
-                                @Override
-                                public CharSequence getText(InfoWindow infoWindow) {
-                                    Log.d("마커 정보창 텍스트", "변경");
-
-                                    return finalAddress_roadaddr; // 리버스 지오코딩 사용해서 좌표를 주소로 변환
-                                    // return marker.getPosition().toString();
-                                }
-                            });
-
-                            // 마커 정보창 위치 설정
-                            infoWindow.setPosition(clickedLatLng);
-                            // 실제 정보창 생성
-                            infoWindow.open(marker);
-                        } catch (ArrayIndexOutOfBoundsException e) {
-                            Toast.makeText(context, "도로명 주소를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
-                        } catch (NullPointerException e){
-                            Toast.makeText(context, "도로명 주소를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
-                        }
-
-                    }
-                }, 300);// 0.3초 딜레이를 준 후 시작
+                printInfoWindowMarker_LatLng = _clickedLatLng; // 전역변수에 터치한 좌표 저장
+                
+                // 도로명 주소 정보창 출력 (리버스 지오코딩 실행)
+                printRoadAddressInfoWindow();
 
                 Log.d("", "맵 클릭");
             }
@@ -206,7 +134,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         infoWindow.setOnClickListener(new Overlay.OnClickListener() {
             @Override
             public boolean onClick(@NonNull Overlay overlay) {
-                Toast.makeText(context, "클릭", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                
+                intent.putExtra("address", finalAddress_roadaddr); // 도로명 주소 + 건물이름 으로 된 문자열
+                intent.putExtra("LatLng", printInfoWindowMarker_LatLng); // 해당 도로명 주소의 경도(longitude),위도(latitude) 값 (소수점 7자리까지 저장한 상태)
+
+                startActivity(intent);
+
                 return false;
             }
         });
@@ -223,8 +157,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 String query = null;
 
                 if (requestReverseGeoCode) { // 좌표 -> 주소 (리버스 지오코딩)
-                    String coord = String.format("%.7f", clickedLatLng.longitude) + "," + String.format("%.7f", clickedLatLng.latitude); // 경도 위도 저장;
-                    Log.d("클릭한 좌표값", coord);
+                    String coord = String.format("%.7f", printInfoWindowMarker_LatLng.longitude) + "," + String.format("%.7f", printInfoWindowMarker_LatLng.latitude); // 경도 위도 저장;
+                    Log.d("좌표값", coord);
 
                     query = "https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?request=coordsToaddr&coords="
                             + coord + "&sourcecrs=epsg:4326&output=json&orders=roadaddr&output=xml"; // coord 기준으로 json 받아오는 쿼리문
@@ -275,15 +209,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                 indexFirst = stringBuilder.indexOf("\"y\":\"");
                                 indexLast = stringBuilder.indexOf("\",\"distance\":");
                                 String y = stringBuilder.substring(indexFirst + 5, indexLast);
-                                searchLatLng = new LatLng(Double.valueOf(y), Double.valueOf(x));
-                                Log.d("검색한 주소 좌표", searchLatLng.toString());
+                                printInfoWindowMarker_LatLng = new LatLng(Double.valueOf(y), Double.valueOf(x));
+                                Log.d("검색한 주소 좌표", printInfoWindowMarker_LatLng.toString());
 
                                 // 카메라 이동시키기
-                                CameraUpdate cameraUpdate = CameraUpdate.scrollTo(searchLatLng).animate(CameraAnimation.Easing);
+                                CameraUpdate cameraUpdate = CameraUpdate.scrollTo(printInfoWindowMarker_LatLng).animate(CameraAnimation.Easing);
                                 naverMap.moveCamera(cameraUpdate);
                             }
                         } catch (StringIndexOutOfBoundsException e){
-                            Log.d("검색 오류", e.toString());
+                            Toast.makeText(context, "도로명 주소를 찾지 못했습니다.", Toast.LENGTH_SHORT).show();
                         }
                     }
 
@@ -297,8 +231,58 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         Log.d("qwe", "지오코드 실행");
     }
-}
 
+
+    private void printRoadAddressInfoWindow() { // 마커에 도로명 주소 띄우는 메서드
+        requestGeocode(true); // 리버스 지오코딩 실행
+
+        new Handler().postDelayed(new Runnable()
+        { // 딜레이 주는 핸들러
+            @Override
+            public void run()
+            {
+                try {
+                    if (address.results[0].region.area1.name != null)
+                        finalAddress_roadaddr = address.results[0].region.area1.name + " ";
+                    if (address.results[0].region.area2.name != null)
+                        finalAddress_roadaddr += address.results[0].region.area2.name + " ";
+                    if (address.results[0].region.area3.name != null)
+                        finalAddress_roadaddr += address.results[0].region.area3.name + " ";
+                    if (address.results[0].region.area4.name != null) // 이거 왠진 모르겠는데 아무것도 안나옴
+                        finalAddress_roadaddr += address.results[0].region.area4.name + " ";
+                    if (address.results[0].land.addition0.value != null)
+                        finalAddress_roadaddr += address.results[0].land.addition0.value;
+
+                    marker.setPosition(printInfoWindowMarker_LatLng);
+                    marker.setMap(naverMap);
+
+                    // 마커 정보 창 설정
+                    infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(context) { // 마커 정보 창 갱신
+                        @Override
+                        public CharSequence getText(InfoWindow infoWindow) {
+                            Log.d("마커 정보창 텍스트", finalAddress_roadaddr);
+
+                            return finalAddress_roadaddr; // 리버스 지오코딩 사용해서 좌표를 주소로 변환
+                            // return marker.getPosition().toString();
+                        }
+                    });
+
+                    // 마커 정보창 위치 설정
+                    infoWindow.setPosition(printInfoWindowMarker_LatLng);
+                    // 실제 정보창 생성
+                    infoWindow.open(marker);
+
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    Toast.makeText(context, "도로명 주소를 찾지 못했습니다.", Toast.LENGTH_SHORT).show();
+                } catch (NullPointerException e){
+                    Toast.makeText(context, "도로명 주소를 찾지 못했습니다.", Toast.LENGTH_SHORT).show();
+                } catch (Overlay.InvalidCoordinateException e){
+                    Toast.makeText(context, "도로명 주소를 찾지 못했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }, 500);// 0.5초 딜레이를 준 후 시작
+    }
+}
 
 // json 주소 처리하기 위한 클래스들
 class Addition {
