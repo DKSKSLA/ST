@@ -192,6 +192,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                             infoWindow.open(marker);
                         } catch (ArrayIndexOutOfBoundsException e) {
                             Toast.makeText(context, "도로명 주소를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+                        } catch (NullPointerException e){
+                            Toast.makeText(context, "도로명 주소를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
                         }
 
                     }
@@ -204,7 +206,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         infoWindow.setOnClickListener(new Overlay.OnClickListener() {
             @Override
             public boolean onClick(@NonNull Overlay overlay) {
-                Log.d("정보창 클릭", "eeeeeeeeeeee");
+                Toast.makeText(context, "클릭", Toast.LENGTH_SHORT).show();
                 return false;
             }
         });
